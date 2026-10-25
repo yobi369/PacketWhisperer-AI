@@ -18,3 +18,31 @@ def test_upload_returns_hash_and_report():
     body = response.json()
     assert len(body["evidence"]["sha256"]) == 64
     assert body["flow_count"] == 1
+
+
+def test_production_readiness_fails_without_authentication(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.delenv("PACKETWHISPERER_API_TOKEN", raising=False)
+    assert client.get("/ready").status_code == 503
+    response = client.post(
+        "/v1/analyze/flows",
+        files={"file": ("flows.csv", b"data", "text/csv")},
+    )
+    assert response.status_code == 503
+
+
+def test_configured_bearer_token_protects_analysis(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("PACKETWHISPERER_API_TOKEN", "test-secret-token")
+    csv = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\\n"
+    denied = client.post(
+        "/v1/analyze/flows",
+        files={"file": ("flows.csv", csv, "text/csv")},
+    )
+    assert denied.status_code == 401
+    allowed = client.post(
+        "/v1/analyze/flows",
+        headers={"Authorization": "Bearer test-secret-token"},
+        files={"file": ("flows.csv", csv, "text/csv")},
+    )
+    assert allowed.status_code == 200
