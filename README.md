@@ -2,7 +2,7 @@
 
 **Explainable network-traffic analysis for security investigations.**
 
-PacketWhisperer AI is an early-stage network security research platform focused on reproducible traffic analysis, evidence-backed findings, and transparent detection logic. This repository is being built around a testable analysis core before adding advanced AI or live-capture features.
+PacketWhisperer AI is an early-stage network security research platform focused on reproducible traffic analysis, evidence-backed findings, and transparent detection logic. It supports validated network-flow CSV and bounded offline PCAP/PCAPNG metadata analysis. It does not perform live capture or claim to be a certified IDS.
 
 ## Engineering principles
 
@@ -14,7 +14,7 @@ PacketWhisperer AI is an early-stage network security research platform focused 
 
 ## Current foundation
 
-The initial service provides a versioned FastAPI API, CSV flow ingestion, schema and numeric validation, SHA-256 evidence fingerprints, explainable heuristic findings, and health/readiness endpoints. Supported input is a CSV of network-flow records, not arbitrary packet captures.
+The service provides a versioned FastAPI API, validated CSV flow ingestion, bounded offline PCAP/PCAPNG parsing, SHA-256 evidence fingerprints, explainable heuristic findings, and health/readiness endpoints. Packet payloads are not returned or deliberately persisted by the analysis endpoint.
 
 ### Expected CSV columns
 
@@ -27,7 +27,7 @@ Ports must be in the range 0–65535. Byte/packet counts and duration must be no
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[test]"
 uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 ```
 
@@ -44,6 +44,7 @@ pytest -q
 - `GET /health` — liveness.
 - `GET /ready` — readiness.
 - `POST /v1/analyze/flows` — multipart CSV upload; returns a SHA-256 fingerprint, summary, and explainable findings.
+- `POST /v1/analyze/pcap` — multipart `.pcap`, `.pcapng`, or `.cap` upload; analyzes packet metadata with 20 MiB and 100,000-packet limits.
 
 ## Detection behavior
 
@@ -51,13 +52,12 @@ The baseline engine uses transparent heuristics such as destination-port fan-out
 
 ## Security and production status
 
-Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The initial service is a research-ready foundation, not a certified or independently validated production intrusion-detection system. Live packet capture, full PCAP decoding, persistent case management, and external LLM integrations are not claimed as implemented.
+Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The service is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, persistent case management, and external LLM integrations are not claimed as implemented.
 
 ## Roadmap
 
-1. Hardened, tested flow-analysis API.
-2. PCAP ingestion using a maintained parser with resource limits.
-3. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
+1. Hardened, tested flow and offline PCAP/PCAPNG analysis APIs.
+2. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
 4. Case management, role-based access, audit persistence, and retention controls.
 5. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
 6. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
