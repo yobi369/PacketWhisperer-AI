@@ -21,3 +21,30 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -e ".[test]"
       - run: pytest -q
+
+  container-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -t packetwhisperer-ai:ci .
+      - name: Start container
+        run: docker run -d --name packetwhisperer-ci -p 8000:8000 packetwhisperer-ai:ci
+      - name: Verify health and dashboard
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:8000/health
+          curl --fail --silent http://127.0.0.1:8000/ready
+          curl --fail --silent http://127.0.0.1:8000/ | grep -q "PacketWhisperer AI"
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs packetwhisperer-ci
+      - name: Cleanup
+        if: always()
+        run: docker rm -f packetwhisperer-ci || true
