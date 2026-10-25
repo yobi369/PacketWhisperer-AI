@@ -1,0 +1,67 @@
+# PacketWhisperer AI
+
+**Explainable network-traffic analysis for security investigations.**
+
+PacketWhisperer AI is an early-stage network security research platform focused on reproducible traffic analysis, evidence-backed findings, and transparent detection logic. This repository is being built around a testable analysis core before adding advanced AI or live-capture features.
+
+## Engineering principles
+
+- **Evidence before claims:** findings identify the records and measurable signals that triggered them.
+- **Deterministic baseline:** core heuristics operate without an external AI service.
+- **Safe-by-default:** analyze only traffic you own or are authorized to inspect.
+- **Reproducible:** fixtures and automated tests accompany detection logic.
+- **Honest scope:** flow-CSV analysis is not equivalent to full PCAP parsing, endpoint detection, or a validated production IDS.
+
+## Current foundation
+
+The initial service provides a versioned FastAPI API, CSV flow ingestion, schema and numeric validation, SHA-256 evidence fingerprints, explainable heuristic findings, and health/readiness endpoints. Supported input is a CSV of network-flow records, not arbitrary packet captures.
+
+### Expected CSV columns
+
+`src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration`
+
+Ports must be in the range 0–65535. Byte/packet counts and duration must be non-negative. The service rejects malformed records rather than silently fabricating values.
+
+## Quick start
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
+```
+
+Open the interactive API documentation at `http://127.0.0.1:8000/docs`.
+
+Run tests:
+
+```bash
+pytest -q
+```
+
+## API
+
+- `GET /health` — liveness.
+- `GET /ready` — readiness.
+- `POST /v1/analyze/flows` — multipart CSV upload; returns a SHA-256 fingerprint, summary, and explainable findings.
+
+## Detection behavior
+
+The baseline engine uses transparent heuristics such as destination-port fan-out, repeated destination-port concentration, and unusually large flow byte counts. These are investigation leads, not proof of compromise. Thresholds are configurable in code and should be calibrated against representative benign and malicious datasets before operational use.
+
+## Security and production status
+
+Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The initial service is a research-ready foundation, not a certified or independently validated production intrusion-detection system. Live packet capture, full PCAP decoding, persistent case management, and external LLM integrations are not claimed as implemented.
+
+## Roadmap
+
+1. Hardened, tested flow-analysis API.
+2. PCAP ingestion using a maintained parser with resource limits.
+3. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
+4. Case management, role-based access, audit persistence, and retention controls.
+5. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
+6. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
+
+## Responsible use
+
+Use only on networks and traffic you own or are explicitly authorized to analyze. Follow applicable privacy, data-protection, and organizational policies.
