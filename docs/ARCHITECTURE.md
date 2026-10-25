@@ -3,30 +3,18 @@
 ```text
 Client / Analyst
       |
-      | multipart CSV (10 MiB maximum)
-      v
-FastAPI transport layer
-  - extension/content-type checks
-  - bounded read
-  - safe error responses
+      +-- multipart CSV (10 MiB maximum) ---> FastAPI ---> strict flow validation
+      |                                                     |
+      |                                                     v
+      |                                            deterministic flow rules
       |
-      v
-Flow validation and normalization
-  - required schema
-  - IP/port/counter validation
-  - row-count bound
-      |
-      v
-Deterministic heuristic engine
-  - source destination fan-out
-  - destination-port diversity
-  - large-flow thresholds
-      |
-      v
-JSON report
-  - summary statistics
-  - rule IDs, severity, evidence and caveats
-  - SHA-256 fingerprint of uploaded bytes
+      +-- offline PCAP/PCAPNG (20 MiB max) ---> bounded reader (100k packets)
+                                                        |
+                                                        v
+                                              packet metadata + SYN heuristics
+                                                        |
+                                                        v
+JSON report: summary, rule evidence, limitations, SHA-256 fingerprint
 ```
 
 ## Design boundaries
@@ -35,4 +23,4 @@ The analysis core is pure Python and can be tested independently of the HTTP lay
 
 ## Known gaps before production deployment
 
-Authentication and authorization, persistent case management, structured audit storage, rate limiting, privacy/retention controls, load testing, dependency vulnerability policy, and a labeled benchmark dataset remain necessary. Raw PCAP parsing and live capture are not part of this initial implementation.
+Authentication and authorization, persistent case management, structured audit storage, rate limiting, privacy/retention controls, load testing, dependency vulnerability policy, and a labeled benchmark dataset remain necessary. Offline PCAP/PCAPNG metadata parsing is implemented with bounded file and packet counts. Live capture, full application-layer dissection, authentication, rate limiting, and durable audit storage remain out of scope.
