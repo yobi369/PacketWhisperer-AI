@@ -15,7 +15,17 @@ Open `http://127.0.0.1:8000/docs`.
 
 ## 2. Submit the sample
 
-Use the `POST /v1/analyze/flows` endpoint and upload `examples/sample_flows.csv`. The JSON response should include a flow count, aggregate counters, findings, and an evidence object with a SHA-256 fingerprint.
+Use `POST /v1/analyze/flows` and upload `examples/sample_flows.csv`. The response includes flow totals, findings, and a SHA-256 evidence fingerprint.
+
+For packet-level metadata, upload a `.pcap` or `.pcapng` file to `POST /v1/analyze/pcap`. For a safe synthetic demonstration, create a small capture with Scapy:
+
+```python
+from scapy.all import Ether, IP, TCP, wrpcap
+packets = [Ether()/IP(src="192.0.2.10", dst="198.51.100.20")/TCP(sport=45000+p, dport=p, flags="S") for p in range(20, 31)]
+wrpcap("synthetic-syn-pattern.pcap", packets)
+```
+
+Upload `synthetic-syn-pattern.pcap` to the PCAP endpoint. It should produce a medium-severity SYN port-diversity investigation lead.
 
 ## 3. Explain the results
 
@@ -30,4 +40,4 @@ Run `pytest -q` and open the GitHub Actions workflow. The CI matrix tests Python
 
 ## Presentation caveat
 
-This is an API and analysis-core demonstration. A polished interactive analyst dashboard, raw PCAP ingestion, live capture, authentication, case storage, and calibrated ML detection are separate roadmap items.
+This is an API and analysis-core demonstration. Offline PCAP/PCAPNG metadata ingestion is implemented with file and packet-count limits. A polished interactive analyst dashboard, live capture, authentication, case storage, and calibrated ML detection remain separate roadmap items.
