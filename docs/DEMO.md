@@ -11,7 +11,7 @@ pip install -e ".[test]"
 uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 ```
 
-Open `http://127.0.0.1:8000/docs`.
+Open the analyst dashboard at `http://127.0.0.1:8000/`. The API explorer is available at `http://127.0.0.1:8000/docs`.
 
 ## 2. Submit the sample
 
