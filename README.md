@@ -33,6 +33,16 @@ uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 
 Open the interactive API documentation at `http://127.0.0.1:8000/docs`.
 
+For a production-mode run, configure a strong secret outside source control before starting the service:
+
+```bash
+export APP_ENV=production
+export PACKETWHISPERER_API_TOKEN='use-a-long-random-secret-from-your-secret-manager'
+uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
+```
+
+Analysis endpoints require `Authorization: Bearer <token>` when a token is configured. Production mode fails readiness and rejects analysis requests if the token is missing. Do not commit secrets or expose the service directly to the public internet.
+
 Run tests:
 
 ```bash
