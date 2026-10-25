@@ -20,12 +20,12 @@ This service accepts user-supplied network-flow CSV and returns heuristic findin
 | Filename path tricks | Filename reduced to basename; never used as a filesystem path | Add upload storage only with random IDs and isolated storage |
 | False positives / overclaiming | Findings include rule IDs, thresholds, evidence, and limitations | Labeled evaluation dataset, precision/recall calibration |
 | Sensitive traffic metadata | No intentional persistence of uploaded file | Authentication, retention policy, deployment privacy review |
-| Unauthorized public access | Localhost quick-start default | Production identity, authorization, TLS, rate limits, network controls |
+| Unauthorized API access | Optional shared bearer token; production mode fails closed if missing | Managed identity, per-user authorization, TLS, rate limits, network controls |
 | Tampered evidence | SHA-256 fingerprint returned for uploaded bytes | Signed manifests, immutable audit storage, access logging |
 
 ## Trust boundaries
 
-Uploaded bytes are untrusted. The API is not an authorization boundary: do not expose it to untrusted networks until authentication, authorization, rate limiting, and deployment controls are implemented and tested.
+Uploaded bytes are untrusted. The optional bearer token is a shared-secret gate, not user identity or role-based authorization. Do not expose the service to untrusted networks until managed identity, authorization, rate limiting, and deployment controls are implemented and tested.
 
 ## Operational guidance
 
