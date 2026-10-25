@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import ipaddress
+import math
 from collections import defaultdict
 from dataclasses import dataclass, asdict
 from typing import Any
@@ -44,6 +45,8 @@ def parse_flows(raw: bytes) -> list[Flow]:
     reader = csv.DictReader(io.StringIO(text, newline=""))
     if not reader.fieldnames:
         raise FlowValidationError("CSV header is missing")
+    if len(reader.fieldnames) != len(set(reader.fieldnames)):
+        raise FlowValidationError("CSV contains duplicate column names")
     missing = sorted(set(REQUIRED_COLUMNS) - set(reader.fieldnames))
     if missing:
         raise FlowValidationError("Missing required columns: " + ", ".join(missing))
@@ -66,6 +69,10 @@ def parse_flows(raw: bytes) -> list[Flow]:
                 raise ValueError("port outside 0..65535")
             if byte_count < 0 or packet_count < 0 or duration < 0:
                 raise ValueError("negative counters or duration")
+            if not math.isfinite(duration):
+                raise ValueError("duration must be finite")
+            if None in row:
+                raise ValueError("record has more values than header columns")
         except (ValueError, TypeError, KeyError) as exc:
             raise FlowValidationError(f"Invalid flow at CSV line {line}: {exc}") from exc
         flows.append(Flow(src, dst, src_port, dst_port, protocol, byte_count, packet_count, duration))
