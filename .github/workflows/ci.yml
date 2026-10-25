@@ -44,7 +44,7 @@ jobs:
           curl --fail --silent http://127.0.0.1:8000/ | grep -q "PacketWhisperer AI"
       - name: Container logs on failure
         if: failure()
-        run: docker logs packetwhisperer-ci
+        run: docker logs packetwhisperer-ci || true
       - name: Cleanup
         if: always()
         run: docker rm -f packetwhisperer-ci || true
