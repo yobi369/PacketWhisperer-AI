@@ -53,3 +53,15 @@ def test_dashboard_is_served():
     assert response.status_code == 200
     assert "PacketWhisperer AI" in response.text
     assert "Evidence integrity" in response.text
+
+
+def test_security_headers_and_no_store_for_analysis(monkeypatch):
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("PACKETWHISPERER_API_TOKEN", raising=False)
+    response = client.get("/")
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-frame-options"] == "DENY"
+    csv = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\n"
+    report = client.post("/v1/analyze/flows", files={"file": ("flows.csv", csv, "text/csv")})
+    assert report.status_code == 200
+    assert report.headers["cache-control"] == "no-store"
