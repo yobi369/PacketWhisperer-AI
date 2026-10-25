@@ -31,7 +31,7 @@ pip install -e ".[test]"
 uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 ```
 
-Open the interactive API documentation at `http://127.0.0.1:8000/docs`.
+Open the analyst dashboard at `http://127.0.0.1:8000/` and interactive API documentation at `http://127.0.0.1:8000/docs`. The dashboard supports CSV and offline PCAP/PCAPNG uploads, findings review, and evidence-hash display; bearer tokens are held in page memory only.
 
 For a production-mode run, configure a strong secret outside source control before starting the service:
 
