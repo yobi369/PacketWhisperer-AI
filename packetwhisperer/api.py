@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import logging
-from fastapi import FastAPI, File, HTTPException, UploadFile
+import os
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from packetwhisperer import __version__
 from packetwhisperer.analyzer import FlowValidationError, analyze_flows, parse_flows
@@ -14,15 +16,33 @@ logger = logging.getLogger("packetwhisperer")
 app = FastAPI(title="PacketWhisperer AI", version=__version__, description="Explainable network-flow analysis API. Findings are heuristic investigation leads, not proof of compromise.", docs_url="/docs", redoc_url="/redoc")
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
+
+def require_api_access(request: Request) -> None:
+    """Require bearer auth when configured; fail closed in production."""
+    expected = os.getenv("PACKETWHISPERER_API_TOKEN", "")
+    production = os.getenv("APP_ENV", "development").strip().lower() == "production"
+    if not expected:
+        if production:
+            raise HTTPException(status_code=503, detail="API authentication is not configured")
+        return
+    supplied = request.headers.get("authorization", "")
+    prefix = "Bearer "
+    if not supplied.startswith(prefix) or not hmac.compare_digest(supplied[len(prefix):], expected):
+        raise HTTPException(status_code=401, detail="Valid bearer token required", headers={"WWW-Authenticate": "Bearer"})
+
 @app.get("/health", tags=["operations"])
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "packetwhisperer-ai", "version": __version__}
 
 @app.get("/ready", tags=["operations"])
-def ready() -> dict[str, str]:
-    return {"status": "ready"}
+def ready() -> JSONResponse:
+    production = os.getenv("APP_ENV", "development").strip().lower() == "production"
+    token_configured = bool(os.getenv("PACKETWHISPERER_API_TOKEN", ""))
+    if production and not token_configured:
+        return JSONResponse(status_code=503, content={"status": "not_ready", "reason": "API authentication is not configured"})
+    return JSONResponse(content={"status": "ready"})
 
-@app.post("/v1/analyze/flows", tags=["analysis"])
+@app.post("/v1/analyze/flows", tags=["analysis"], dependencies=[Depends(require_api_access)])
 async def analyze_upload(file: UploadFile = File(...)) -> JSONResponse:
     filename = (file.filename or "").replace("\\", "/").split("/")[-1]
     if not filename.lower().endswith(".csv"):
@@ -42,7 +62,7 @@ async def analyze_upload(file: UploadFile = File(...)) -> JSONResponse:
     logger.info("analysis_complete flow_count=%d findings=%d evidence_sha256=%s", report["flow_count"], report["findings_count"], report["evidence"]["sha256"])
     return JSONResponse(content=report)
 
-@app.post("/v1/analyze/pcap", tags=["analysis"])
+@app.post("/v1/analyze/pcap", tags=["analysis"], dependencies=[Depends(require_api_access)])
 async def analyze_capture(file: UploadFile = File(...)) -> JSONResponse:
     """Analyze offline PCAP/PCAPNG packet metadata; never enable live capture."""
     filename = (file.filename or "").replace("\\", "/").split("/")[-1]
