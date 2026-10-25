@@ -12,12 +12,13 @@ The container listens on the platform-provided `PORT` value (defaulting to 8000 
 
 ## Smoke tests after deploy
 
-1. Confirm `/health` returns `200`.
-2. Confirm `/ready` returns `200` only after the production token is configured.
-3. Call `POST /v1/analyze/flows` without a token and confirm it returns `401`.
-4. Call the same endpoint with `Authorization: Bearer <your-token>` and a small authorized test CSV; confirm it returns a report and SHA-256 evidence fingerprint.
-5. Upload a small synthetic PCAP to `POST /v1/analyze/pcap` with the same bearer header; confirm packet totals and evidence hash.
-6. Confirm malformed and oversized uploads are rejected and no source traffic is stored by the application.
+1. Open `/` and confirm the PacketWhisperer analyst dashboard loads.
+2. Confirm `/health` returns `200`.
+3. Confirm `/ready` returns `200` only after the production token is configured.
+4. Call `POST /v1/analyze/flows` without a token and confirm it returns `401`.
+5. Call the same endpoint with `Authorization: Bearer <your-token>` and a small authorized test CSV; confirm it returns a report and SHA-256 evidence fingerprint.
+6. Upload a small synthetic PCAP to `POST /v1/analyze/pcap` with the same bearer header; confirm packet totals and evidence hash.
+7. Confirm malformed and oversized uploads are rejected and no source traffic is stored by the application.
 
 Example request:
 
