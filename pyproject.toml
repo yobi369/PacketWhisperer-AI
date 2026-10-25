@@ -23,3 +23,6 @@ addopts = "-ra"
 
 [tool.setuptools.packages.find]
 include = ["packetwhisperer*"]
+
+[tool.setuptools.package-data]
+packetwhisperer = ["static/*.html"]
