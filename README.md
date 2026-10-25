@@ -52,6 +52,14 @@ Run tests:
 pytest -q
 ```
 
+Run the deterministic synthetic rule benchmark:
+
+```bash
+python benchmarks/evaluate_synthetic.py
+```
+
+The benchmark reports per-rule precision/recall on three generated sanity scenarios. These scores validate only expected rule behavior; they are not real-world detection-quality estimates.
+
 ## API
 
 - `GET /health` — liveness.
