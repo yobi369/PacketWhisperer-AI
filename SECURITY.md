@@ -19,4 +19,4 @@ Please do not publish sensitive traffic captures, credentials, personal data, or
 
 ## Current limitations
 
-The initial service has no user authentication, role-based access control, persistent audit store, case management, or production-grade rate limiting. These are known gaps, not features to assume are present.
+A configurable shared bearer-token gate is available, and production mode fails closed if the token is missing. This is not user identity or role-based access control. Persistent audit storage, case management, and production-grade rate limiting remain known gaps, not features to assume are present.
