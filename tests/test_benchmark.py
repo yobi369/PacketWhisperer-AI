@@ -1,4 +1,4 @@
-from benchmarks.evaluate_synthetic import evaluate
+from packetwhisperer.benchmark import evaluate
 
 
 def test_synthetic_benchmark_cases_are_reproducible():
