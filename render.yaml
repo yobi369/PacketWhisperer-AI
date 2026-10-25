@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: packetwhisperer-ai
+    runtime: docker
+    plan: starter
+    healthCheckPath: /ready
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PACKETWHISPERER_API_TOKEN
+        sync: false
