@@ -46,3 +46,10 @@ def test_configured_bearer_token_protects_analysis(monkeypatch):
         files={"file": ("flows.csv", csv, "text/csv")},
     )
     assert allowed.status_code == 200
+
+
+def test_dashboard_is_served():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "PacketWhisperer AI" in response.text
+    assert "Evidence integrity" in response.text
