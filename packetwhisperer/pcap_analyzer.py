@@ -6,7 +6,6 @@ from collections import Counter, defaultdict
 from typing import Any
 
 from scapy.all import IP, IPv6, TCP, UDP, DNS, PcapReader
-from scapy.error import Scapy_Exception
 
 MAX_CAPTURE_BYTES = 20 * 1024 * 1024
 MAX_PACKETS = 100_000
@@ -78,7 +77,7 @@ def analyze_pcap(raw: bytes) -> dict[str, Any]:
             reader.close()
     except CaptureValidationError:
         raise
-    except (Scapy_Exception, ValueError, TypeError, OSError, EOFError) as exc:
+    except Exception as exc:
         raise CaptureValidationError("Invalid or unsupported PCAP/PCAPNG capture") from exc
 
     if packet_count == 0:
