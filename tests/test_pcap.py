@@ -1,5 +1,6 @@
 import pytest
 from scapy.all import Ether, IP, TCP, wrpcap
+from scapy.utils import PcapNgWriter
 from fastapi.testclient import TestClient
 
 from packetwhisperer.api import app
@@ -58,3 +59,13 @@ def test_pcap_endpoint_rejects_wrong_extension():
         files={"file": ("capture.txt", b"anything", "application/octet-stream")},
     )
     assert response.status_code == 415
+
+
+def test_pcapng_capture_is_supported(tmp_path):
+    path = tmp_path / "sample.pcapng"
+    writer = PcapNgWriter(str(path))
+    writer.write(Ether() / IP(src="192.0.2.3", dst="198.51.100.7") / TCP(sport=50000, dport=443, flags="PA"))
+    writer.close()
+    report = analyze_pcap(path.read_bytes())
+    assert report["capture"]["packets_analyzed"] == 1
+    assert report["capture"]["format"] == "pcap-or-pcapng"
