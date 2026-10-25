@@ -75,6 +75,10 @@ The baseline engine uses transparent heuristics such as destination-port fan-out
 
 Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The service is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, persistent case management, and external LLM integrations are not claimed as implemented.
 
+## Technical brief
+
+See [`docs/RESEARCH_BRIEF.md`](docs/RESEARCH_BRIEF.md) for the research question, evaluation methodology, security boundaries, and an honest summary of limitations. For a live walkthrough, use [`docs/DEMO.md`](docs/DEMO.md) and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
 ## Roadmap
 
 1. Hardened, tested flow and offline PCAP/PCAPNG analysis APIs.
