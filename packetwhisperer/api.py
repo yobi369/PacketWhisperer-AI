@@ -15,6 +15,20 @@ from packetwhisperer.pcap_analyzer import CaptureValidationError, MAX_CAPTURE_BY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("packetwhisperer")
 app = FastAPI(title="PacketWhisperer AI", version=__version__, description="Explainable network-flow analysis API. Findings are heuristic investigation leads, not proof of compromise.", docs_url="/docs", redoc_url="/redoc")
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    if request.url.path.startswith("/v1/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
