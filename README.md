@@ -1,5 +1,8 @@
 # PacketWhisperer AI
 
+![CI](https://github.com/yobi369/PacketWhisperer-AI/actions/workflows/ci.yml/badge.svg)
+![Security checks](https://github.com/yobi369/PacketWhisperer-AI/actions/workflows/security.yml/badge.svg)
+
 **Explainable network-traffic analysis for security investigations.**
 
 PacketWhisperer AI is an early-stage network security research platform focused on reproducible traffic analysis, evidence-backed findings, and transparent detection logic. It supports validated network-flow CSV and bounded offline PCAP/PCAPNG metadata analysis. It does not perform live capture or claim to be a certified IDS.
