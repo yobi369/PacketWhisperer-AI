@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>PacketWhisperer AI — Network Intelligence</title>
+<style>
+:root{color-scheme:dark;--bg:#090d16;--panel:#111827;--panel2:#0d1421;--line:#243146;--text:#edf3ff;--muted:#91a2bb;--cyan:#69e0d0;--blue:#83aaff;--amber:#ffca7a;--red:#ff818e;--green:#8ce0ac}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 78% -12%,#1c3350 0,transparent 42%),var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1440px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;gap:18px;border-bottom:1px solid var(--line);padding-bottom:22px}.brand{display:flex;align-items:center;gap:13px}.mark{width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#65e2d2,#6f98ff);display:grid;place-items:center;color:#07111a;font-size:22px;font-weight:900;box-shadow:0 0 32px #65e2d226}.brand h1{font-size:18px;letter-spacing:.02em;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.pill{border:1px solid var(--line);border-radius:999px;padding:7px 11px;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase}.pill.live{color:var(--green);border-color:#285440}.hero{display:flex;justify-content:space-between;align-items:end;gap:24px;padding:30px 0 22px}.eyebrow{color:var(--cyan);text-transform:uppercase;font-size:11px;letter-spacing:.16em;font-weight:700}.hero h2{font-size:clamp(25px,4vw,38px);line-height:1.12;letter-spacing:-.04em;margin:9px 0 10px}.hero p{max-width:700px;color:var(--muted);margin:0}.hero .version{text-align:right;min-width:120px;color:var(--muted);font-size:12px}.hero .version strong{display:block;color:var(--text);font-size:20px;margin-bottom:4px}.grid{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:18px;align-items:start}.panel{border:1px solid var(--line);border-radius:18px;background:linear-gradient(155deg,#121b2aee,#0d1421f5);overflow:hidden;box-shadow:0 18px 50px #00000014}.panelhead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.panelhead h3{font-size:14px;margin:0}.panelhead small{color:var(--muted)}.panelbody{padding:20px}.field{display:block;margin-bottom:15px}.field span{display:block;color:#b8c6db;font-size:12px;font-weight:600;margin-bottom:7px}.field input,.field select{width:100%;border:1px solid #2a3950;background:#0a111d;color:var(--text);padding:11px 12px;border-radius:10px;outline:none}.field input:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #69e0d01a}.hint{font-size:11px;color:var(--muted);margin-top:7px}.drop{border:1px dashed #42536e;background:#0b1320;border-radius:13px;padding:22px 14px;text-align:center;margin-bottom:15px}.drop strong{display:block;margin-bottom:5px}.drop p{font-size:12px;color:var(--muted);margin:0 0 12px}.drop input{width:100%;font-size:12px;color:var(--muted)}.primary{width:100%;border:0;border-radius:10px;padding:12px 14px;font-weight:800;color:#06121b;background:linear-gradient(100deg,var(--cyan),#a1c5ff);box-shadow:0 8px 24px #69e0d018}.primary:disabled{opacity:.45;cursor:not-allowed}.message{display:none;padding:10px 12px;border-radius:9px;margin-top:13px;font-size:12px;overflow-wrap:anywhere}.message.show{display:block}.message.error{background:#3a1722;color:#ffc0c7;border:1px solid #71303c}.message.ok{background:#102d2a;color:#a7f0d4;border:1px solid #285a4e}.privacy{display:flex;gap:9px;color:var(--muted);font-size:11px;margin-top:16px;line-height:1.5}.privacy b{color:var(--cyan)}.results{display:grid;gap:18px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.metric{border:1px solid var(--line);border-radius:14px;padding:16px;background:#101827a8;min-width:0}.metric label{color:var(--muted);font-size:11px;display:block;margin-bottom:8px}.metric strong{display:block;font-size:clamp(19px,2.2vw,27px);letter-spacing:-.04em;overflow-wrap:anywhere}.metric em{display:block;font-size:11px;color:var(--muted);font-style:normal;margin-top:4px}.result-placeholder{padding:48px 24px;text-align:center;color:var(--muted)}.orb{width:64px;height:64px;border-radius:20px;border:1px solid #31435b;background:#0c1625;display:grid;place-items:center;margin:0 auto 17px;color:var(--cyan);font-size:26px}.result-placeholder h3{color:var(--text);margin:0 0 7px}.result-placeholder p{max-width:430px;margin:0 auto;font-size:12px}.findings{display:grid;gap:10px}.finding{border:1px solid var(--line);background:#0c1421;border-radius:12px;padding:15px}.findingtop{display:flex;justify-content:space-between;gap:12px;align-items:start}.finding h4{font-size:13px;margin:0 0 5px}.rule{font-family:ui-monospace,SFMono-Regular,monospace;color:var(--muted);font-size:10px;overflow-wrap:anywhere}.severity{font-size:10px;text-transform:uppercase;letter-spacing:.09em;padding:4px 7px;border-radius:6px;white-space:nowrap}.severity.medium{background:#3b2b16;color:var(--amber)}.severity.high,.severity.critical{background:#3c1c28;color:#ffabb4}.severity.low{background:#1a2b3d;color:#a8c9ff}.severity.info{background:#15332d;color:#9cebd2}.finding p{font-size:12px;color:#bac7da;margin:11px 0 0}.interpretation{border-left:2px solid #425a7b;padding-left:10px}.empty{border:1px dashed #2a3950;border-radius:12px;padding:22px;text-align:center;color:var(--muted);font-size:12px}.evidence{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid #202c3f;font-size:12px}.evidence:last-child{border-bottom:0}.evidence span{color:var(--muted)}.evidence code{font-size:11px;overflow-wrap:anywhere;color:#c6d7f3}.footer{color:#6f819c;font-size:11px;padding:20px 0 5px;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.hidden{display:none!important}@media(max-width:900px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{align-items:start}.hero .version{display:none}}@media(max-width:520px){.shell{padding:14px}.top{align-items:start}.topright .pill:nth-child(2){display:none}.hero{padding:23px 0 18px}.panelbody{padding:15px}.metrics{gap:8px}.metric{padding:12px}.evidence{grid-template-columns:95px minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top">
+  <div class="brand"><div class="mark">⌁</div><div><h1>PACKETWHISPERER <span style="color:var(--cyan)">AI</span></h1><p>NETWORK INTELLIGENCE · EVIDENCE-FIRST ANALYSIS</p></div></div>
+  <div class="topright"><span class="pill live">● Analysis core online</span><span class="pill">Local-first interface</span></div>
+</header>
+<section class="hero">
+  <div><div class="eyebrow">Security investigation workspace</div><h2>See the signal.<br>Keep the evidence.</h2><p>Analyze network-flow records or offline packet captures. Every finding includes a rule, observable evidence, and a clear statement of uncertainty.</p></div>
+  <div class="version"><strong>v0.1.0</strong>Research build<br>Deterministic baseline</div>
+</section>
+<main class="grid">
+  <section class="panel">
+    <div class="panelhead"><h3>New analysis</h3><small>Authorized data only</small></div>
+    <div class="panelbody">
+      <label class="field"><span>Analysis source</span><select id="kind"><option value="flows">Network flow CSV</option><option value="pcap">PCAP / PCAPNG capture</option></select></label>
+      <label class="field"><span>API endpoint</span><input id="endpoint" type="url" placeholder="Same origin by default" autocomplete="url"><div class="hint">Leave blank to use this dashboard's host. For local development, use http://127.0.0.1:8000</div></label>
+      <label class="field"><span>API bearer token <small style="font-weight:400;color:var(--muted)">(if configured)</small></span><input id="token" type="password" placeholder="Enter token for this session" autocomplete="off"><div class="hint">Held only in this page's memory; never saved to browser storage.</div></label>
+      <div class="drop"><strong>Choose a capture or flow file</strong><p id="filehint">CSV · maximum 10 MiB</p><input id="file" type="file" accept=".csv,text/csv"></div>
+      <button id="analyze" class="primary" disabled>Analyze traffic <span aria-hidden="true">↗</span></button>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+      <div class="privacy"><span>◇</span><span><b>Evidence-first.</b> Files are submitted only to the API endpoint you choose. The dashboard does not store captures or analysis history.</span></div>
+    </div>
+  </section>
+  <section class="results">
+    <div class="metrics">
+      <div class="metric"><label>PACKETS / FLOWS</label><strong id="m-count">—</strong><em id="m-count-note">Awaiting analysis</em></div>
+      <div class="metric"><label>UNIQUE SOURCES</label><strong id="m-sources">—</strong><em>Observed in input</em></div>
+      <div class="metric"><label>FINDINGS</label><strong id="m-findings">—</strong><em id="m-findings-note">No report yet</em></div>
+      <div class="metric"><label>CAPTURE SIZE</label><strong id="m-size">—</strong><em>Uploaded bytes</em></div>
+    </div>
+    <section class="panel">
+      <div class="panelhead"><h3>Detection findings</h3><small id="reportstatus">Awaiting evidence</small></div>
+      <div class="panelbody">
+        <div id="placeholder" class="result-placeholder"><div class="orb">⌁</div><h3>Ready when you are</h3><p>Choose a CSV or packet capture to produce a reproducible analysis report. Alerts are investigation leads, not proof of compromise.</p></div>
+        <div id="findings" class="findings hidden"></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panelhead"><h3>Evidence integrity</h3><small>SHA-256 fingerprint</small></div>
+      <div class="panelbody" id="evidence"><div class="empty">The evidence fingerprint appears after a successful analysis.</div></div>
+    </section>
+    <section class="panel">
+      <div class="panelhead"><h3>Analysis limitations</h3><small>Interpret findings responsibly</small></div>
+      <div class="panelbody"><ul id="limitations" style="margin:0;padding-left:18px;color:var(--muted);font-size:12px"><li>Results depend on the supplied dataset and capture completeness.</li><li>Heuristics are not proof of malicious activity.</li><li>Encrypted payloads are not decrypted by this service.</li></ul></div>
+    </section>
+  </section>
+</main>
+<footer class="footer"><span>PACKETWHISPERER AI · Explainable network analysis</span><span>Only inspect traffic you own or are authorized to analyze.</span></footer>
+</div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const kind = $("kind"), file = $("file"), analyze = $("analyze");
+  const endpoint = $("endpoint"), token = $("token"), message = $("message");
+  let lastReport = null;
+  function setMessage(text, type) { message.textContent = text; message.className = "message show " + type; }
+  function formatBytes(n) { if (n < 1024) return n + " B"; if (n < 1048576) return (n / 1024).toFixed(1) + " KiB"; return (n / 1048576).toFixed(2) + " MiB"; }
+  function targetUrl() { const base = endpoint.value.trim().replace(/\/$/, "") || window.location.origin; return base + "/v1/analyze/" + kind.value; }
+  function syncFile() { const isPcap = kind.value === "pcap"; file.accept = isPcap ? ".pcap,.pcapng,.cap,application/octet-stream" : ".csv,text/csv"; $("filehint").textContent = isPcap ? "PCAP / PCAPNG · maximum 20 MiB" : "CSV · maximum 10 MiB"; file.value = ""; analyze.disabled = true; message.className = "message"; }
+  function textNode(tag, cls, text) { const el = document.createElement(tag); if (cls) el.className = cls; el.textContent = text == null ? "" : String(text); return el; }
+  function renderFindings(report) {
+    const container = $("findings"); container.replaceChildren();
+    if (!report.findings || report.findings.length === 0) { container.append(textNode("div", "empty", "No configured heuristic thresholds were crossed in this input. This does not establish that the traffic is benign.")); }
+    for (const f of report.findings || []) {
+      const card = textNode("article", "finding", "");
+      const top = textNode("div", "findingtop", "");
+      const left = textNode("div", "", "");
+      left.append(textNode("h4", "", f.title || f.rule_id || "Finding"), textNode("div", "rule", f.rule_id || "UNCLASSIFIED"));
+      const sev = textNode("span", "severity " + String(f.severity || "info").toLowerCase(), f.severity || "info");
+      top.append(left, sev); card.append(top);
+      if (f.evidence) card.append(textNode("p", "", f.evidence));
+      if (f.interpretation) card.append(textNode("p", "interpretation", f.interpretation));
+      container.append(card);
+    }
+    $("placeholder").classList.add("hidden"); container.classList.remove("hidden");
+  }
+  function renderReport(r) {
+    lastReport = r;
+    const pcap = kind.value === "pcap";
+    const count = pcap ? r.capture?.packets_analyzed : r.flow_count;
+    const summary = r.summary || {};
+    $("m-count").textContent = count ?? "—";
+    $("m-count-note").textContent = pcap ? "Packets analyzed" : "Flow records analyzed";
+    $("m-sources").textContent = pcap ? (summary.ipv4_packets ?? 0) + " v4 / " + (summary.ipv6_packets ?? 0) + " v6" : (r.unique_sources ?? "—");
+    $("m-findings").textContent = r.findings_count ?? 0;
+    $("m-findings-note").textContent = (r.findings_count ?? 0) ? "Needs analyst review" : "No thresholds crossed";
+    $("m-size").textContent = formatBytes(r.evidence?.bytes_received ?? 0);
+    $("reportstatus").textContent = "Report generated";
+    renderFindings(r);
+    const ev = $("evidence"); ev.replaceChildren();
+    for (const [label, value] of [["File", r.evidence?.filename], ["Format", r.evidence?.format], ["SHA-256", r.evidence?.sha256]]) {
+      const row = textNode("div", "evidence", ""); row.append(textNode("span", "", label), textNode(label === "SHA-256" ? "code" : "strong", "", value || "Not supplied")); ev.append(row);
+    }
+    if (pcap) {
+      const row = textNode("div", "evidence", ""); row.append(textNode("span", "", "Protocols"), textNode("code", "", JSON.stringify(summary.protocol_counts || {}))); ev.append(row);
+    } else {
+      for (const [label, value] of [["Destinations", r.unique_destinations], ["Total bytes", r.total_bytes], ["Total packets", r.total_packets]]) {
+        const row = textNode("div", "evidence", ""); row.append(textNode("span", "", label), textNode("strong", "", value ?? "—")); ev.append(row);
+      }
+    }
+    const lim = $("limitations"); lim.replaceChildren();
+    for (const item of r.limitations || []) lim.append(textNode("li", "", item));
+  }
+  kind.addEventListener("change", syncFile);
+  file.addEventListener("change", () => { analyze.disabled = !file.files || file.files.length === 0; message.className = "message"; });
+  analyze.addEventListener("click", async () => {
+    if (!file.files || !file.files[0]) return;
+    const chosen = file.files[0];
+    const max = kind.value === "pcap" ? 20 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (chosen.size > max) { setMessage("File exceeds the " + formatBytes(max) + " upload limit.", "error"); return; }
+    const expectedExt = kind.value === "pcap" ? /\.(pcap|pcapng|cap)$/i : /\.csv$/i;
+    if (!expectedExt.test(chosen.name)) { setMessage("Choose a file whose extension matches the selected analysis source.", "error"); return; }
+    analyze.disabled = true; analyze.textContent = "Analyzing…"; $("reportstatus").textContent = "Processing input";
+    const body = new FormData(); body.append("file", chosen, chosen.name);
+    const headers = {}; if (token.value) headers.Authorization = "Bearer " + token.value;
+    try {
+      const response = await fetch(targetUrl(), {method:"POST", headers, body});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || ("Analysis request failed (" + response.status + ")"));
+      renderReport(data); setMessage("Analysis complete. Verify findings against your authorized environment and capture context.", "ok");
+    } catch (err) {
+      $("reportstatus").textContent = "Analysis failed";
+      setMessage(String(err.message || err) + " — check the API endpoint, network access, and bearer token.", "error");
+    } finally { analyze.disabled = !file.files || file.files.length === 0; analyze.textContent = "Analyze traffic ↗"; }
+  });
+  syncFile();
+})();
+</script>
+</body>
+</html>
