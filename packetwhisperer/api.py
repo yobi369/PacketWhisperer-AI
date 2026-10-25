@@ -5,8 +5,9 @@ import hashlib
 import hmac
 import logging
 import os
+from pathlib import Path
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from packetwhisperer import __version__
 from packetwhisperer.analyzer import FlowValidationError, analyze_flows, parse_flows
 from packetwhisperer.pcap_analyzer import CaptureValidationError, MAX_CAPTURE_BYTES, analyze_pcap
@@ -29,6 +30,11 @@ def require_api_access(request: Request) -> None:
     prefix = "Bearer "
     if not supplied.startswith(prefix) or not hmac.compare_digest(supplied[len(prefix):], expected):
         raise HTTPException(status_code=401, detail="Valid bearer token required", headers={"WWW-Authenticate": "Bearer"})
+
+@app.get("/", include_in_schema=False)
+def dashboard() -> FileResponse:
+    return FileResponse(Path(__file__).parent / "static" / "index.html")
+
 
 @app.get("/health", tags=["operations"])
 def health() -> dict[str, str]:
