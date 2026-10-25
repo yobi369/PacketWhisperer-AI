@@ -35,3 +35,10 @@ def test_large_flow_detection_is_deterministic():
 def test_rejects_empty_input():
     with pytest.raises(FlowValidationError, match="empty"):
         parse_flows(b"")
+
+def test_rejects_non_finite_duration_and_duplicate_headers():
+    with pytest.raises(FlowValidationError, match="duration must be finite"):
+        parse_flows(HEADER + row(duration="nan"))
+    duplicate_header = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration,duration\n"
+    with pytest.raises(FlowValidationError, match="duplicate column names"):
+        parse_flows(duplicate_header + row())
