@@ -72,7 +72,11 @@ def evaluate() -> dict:
     }
 
 
-if __name__ == "__main__":
+def main() -> None:
     result = evaluate()
     print(json.dumps(result, indent=2, sort_keys=True))
     raise SystemExit(0 if result["all_scenarios_passed"] else 1)
+
+
+if __name__ == "__main__":
+    main()
