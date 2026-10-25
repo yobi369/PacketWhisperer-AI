@@ -3,7 +3,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 COPY requirements.txt pyproject.toml ./
 COPY packetwhisperer ./packetwhisperer
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN pip install --no-cache-dir . \
     && useradd --create-home --uid 10001 appuser
 USER 10001:10001
 EXPOSE 8000
