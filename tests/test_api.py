@@ -34,7 +34,7 @@ def test_production_readiness_fails_without_authentication(monkeypatch):
 def test_configured_bearer_token_protects_analysis(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("PACKETWHISPERER_API_TOKEN", "test-secret-token")
-    csv = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\\n"
+    csv = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\n"
     denied = client.post(
         "/v1/analyze/flows",
         files={"file": ("flows.csv", csv, "text/csv")},
