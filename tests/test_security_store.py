@@ -54,7 +54,9 @@ def test_role_boundaries_case_storage_and_audit(isolated_store):
     assert created.status_code == 200, created.text
     viewer_token = _login("readonly", "secure-viewer-password-2026")
     viewer = {"Authorization": f"Bearer {viewer_token}"}
-
+    csv_body = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\\n"
+    denied_analysis = client.post("/v1/analyze/flows", headers=viewer, files={"file": ("flows.csv", csv_body, "text/csv")})
+    assert denied_analysis.status_code == 403
     assert client.post("/v1/cases", headers=viewer, json={"title": "Investigate scan"}).status_code == 403
     assert client.get("/v1/cases", headers=viewer).status_code == 200
 
