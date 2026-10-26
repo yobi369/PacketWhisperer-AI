@@ -15,10 +15,11 @@ import secrets
 import sqlite3
 import redis
 import time
+import tempfile
 from pathlib import Path
 from typing import Any
 
-DB_PATH = os.getenv("PACKETWHISPERER_DB_PATH", "/tmp/packetwhisperer-data.sqlite3")
+DB_PATH = os.getenv("PACKETWHISPERER_DB_PATH", str(Path(tempfile.gettempdir()) / "packetwhisperer-data.sqlite3"))
 PBKDF2_ROUNDS = 310_000
 ROLES = {"admin", "analyst", "viewer"}
 _REDIS_CLIENT = None
