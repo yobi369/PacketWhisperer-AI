@@ -43,6 +43,7 @@ MAX_MULTIPART_OVERHEAD = 256 * 1024
 MIN_PRODUCTION_TOKEN_BYTES = 32
 RATE_LIMIT = int(os.getenv("PACKETWHISPERER_RATE_LIMIT", "60"))
 RATE_WINDOW_SECONDS = 60
+TOKEN_TYPE = "bearer"
 
 
 def _b64(data: bytes) -> str:
@@ -330,7 +331,7 @@ def login(payload: LoginInput, request: Request) -> dict:
         store.audit(None, "identity.login", outcome="denied", details={"username": payload.username[:64]})
         raise HTTPException(status_code=401, detail="Invalid username or password")
     store.audit(actor, "identity.login", "user", actor["id"])
-    return {"access_token": _issue_session(actor), "token_type": "bearer", "expires_in": 3600, "user": actor}
+    return {"access_token": _issue_session(actor), "token_type": TOKEN_TYPE, "expires_in": 3600, "user": actor}
 
 
 @app.post("/v1/admin/users", tags=["identity"])
