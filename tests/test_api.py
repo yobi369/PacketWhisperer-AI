@@ -43,6 +43,21 @@ def test_production_readiness_fails_without_authentication(monkeypatch):
     )
     assert response.status_code == 503
 
+def test_authentication_rejects_before_multipart_parsing(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("PACKETWHISPERER_API_TOKEN", VALID_TOKEN)
+    # Deliberately malformed multipart body: auth must reject it before the
+    # request parser is invoked, regardless of the submitted body contents.
+    response = client.post(
+        "/v1/analyze/flows",
+        headers={"Content-Type": "multipart/form-data; boundary=broken"},
+        content=b"not-a-valid-multipart-body",
+    )
+    assert response.status_code == 401
+    assert response.headers["www-authenticate"] == "Bearer"
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-content-type-options"] == "nosniff"
+
 
 def test_production_rejects_weak_token(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
