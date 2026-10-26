@@ -14,12 +14,15 @@ import os
 import secrets
 import sqlite3
 import redis
+import psycopg
+from psycopg.rows import dict_row
 import time
 import tempfile
 from pathlib import Path
 from typing import Any
 
 DB_PATH = os.getenv("PACKETWHISPERER_DB_PATH", str(Path(tempfile.gettempdir()) / "packetwhisperer-data.sqlite3"))
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 PBKDF2_ROUNDS = 310_000
 ROLES = {"admin", "analyst", "viewer"}
 _REDIS_CLIENT = None
@@ -35,7 +38,34 @@ def _redis_client():
     return _REDIS_CLIENT
 
 
-def _connect() -> sqlite3.Connection:
+class _Database:
+    """Small adapter for SQLite and PostgreSQL."""
+    def __init__(self, connection, postgres: bool):
+        self.connection = connection
+        self.postgres = postgres
+
+    def execute(self, sql: str, params=()):
+        if self.postgres:
+            sql = sql.replace("?", "%s")
+        return self.connection.execute(sql, params)
+
+    def executescript(self, sql: str):
+        if self.postgres:
+            for statement in sql.split(";"):
+                statement = statement.strip()
+                if statement and not statement.upper().startswith("PRAGMA"):
+                    self.execute(statement)
+        else:
+            self.connection.executescript(sql)
+
+    def close(self):
+        self.connection.close()
+
+
+def _connect():
+    if DATABASE_URL:
+        connection = psycopg.connect(DATABASE_URL, autocommit=True, row_factory=dict_row, connect_timeout=5)
+        return _Database(connection, True)
     path = Path(DB_PATH)
     if str(path) != ":memory:":
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -43,7 +73,7 @@ def _connect() -> sqlite3.Connection:
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA busy_timeout=10000")
     connection.execute("PRAGMA foreign_keys=ON")
-    return connection
+    return _Database(connection, False)
 
 
 @contextmanager
@@ -57,6 +87,32 @@ def _connection():
 
 def init_store() -> None:
     with _connection() as db:
+        if DATABASE_URL:
+            db.executescript("""
+            CREATE TABLE IF NOT EXISTS users (
+              id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE,
+              password_hash TEXT NOT NULL, salt TEXT NOT NULL,
+              role TEXT NOT NULL CHECK(role IN ('admin','analyst','viewer')),
+              active INTEGER NOT NULL DEFAULT 1, created_at DOUBLE PRECISION NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS cases (
+              id TEXT PRIMARY KEY, title TEXT NOT NULL, status TEXT NOT NULL,
+              severity TEXT NOT NULL, evidence_sha256 TEXT, summary_json TEXT NOT NULL,
+              created_by TEXT NOT NULL REFERENCES users(id), created_at DOUBLE PRECISION NOT NULL,
+              updated_at DOUBLE PRECISION NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS audit_events (
+              id BIGSERIAL PRIMARY KEY, occurred_at DOUBLE PRECISION NOT NULL,
+              actor_id TEXT, actor_name TEXT, action TEXT NOT NULL, resource_type TEXT,
+              resource_id TEXT, outcome TEXT NOT NULL, details_json TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS audit_events_time_idx ON audit_events(occurred_at);
+            CREATE INDEX IF NOT EXISTS cases_created_idx ON cases(created_at);
+            CREATE TABLE IF NOT EXISTS rate_windows (
+              bucket TEXT PRIMARY KEY, window_start BIGINT NOT NULL, hits INTEGER NOT NULL
+            );
+            """)
+            return
         db.executescript("""
         PRAGMA journal_mode=WAL;
         CREATE TABLE IF NOT EXISTS users (
@@ -107,7 +163,7 @@ def create_user(username: str, password: str, role: str) -> dict[str, Any]:
 
 
 def authenticate_user(username: str, password: str) -> dict[str, Any] | None:
-    with _connect() as db:
+    with _connection() as db:
         row = db.execute("SELECT * FROM users WHERE username=?", (username.strip().lower(),)).fetchone()
     if row is None:
         # Equalize the expensive work for unknown usernames.
@@ -145,7 +201,7 @@ def allow_request(bucket: str, limit: int, window_seconds: int, now: int | None 
             hits, _ = pipe.execute()
         return int(hits) <= limit
     with _connect() as db:
-        db.execute("BEGIN IMMEDIATE")
+        db.execute("BEGIN IMMEDIATE" if not DATABASE_URL else "BEGIN")
         row = db.execute("SELECT window_start,hits FROM rate_windows WHERE bucket=?", (bucket,)).fetchone()
         if row is None or int(row["window_start"]) != start:
             db.execute(
