@@ -13,6 +13,7 @@ import json
 import os
 import secrets
 import sqlite3
+import redis
 import time
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,17 @@ from typing import Any
 DB_PATH = os.getenv("PACKETWHISPERER_DB_PATH", "packetwhisperer-data.sqlite3")
 PBKDF2_ROUNDS = 310_000
 ROLES = {"admin", "analyst", "viewer"}
+_REDIS_CLIENT = None
+
+
+def _redis_client():
+    global _REDIS_CLIENT
+    url = os.getenv("REDIS_URL", "")
+    if not url:
+        return None
+    if _REDIS_CLIENT is None:
+        _REDIS_CLIENT = redis.Redis.from_url(url, socket_connect_timeout=2, socket_timeout=2, decode_responses=True)
+    return _REDIS_CLIENT
 
 
 def _connect() -> sqlite3.Connection:
@@ -120,9 +132,17 @@ def user_count() -> int:
 
 
 def allow_request(bucket: str, limit: int, window_seconds: int, now: int | None = None) -> bool:
-    """Atomic fixed-window limiter. A shared DB is required across instances."""
+    """Atomic fixed-window limiter backed by shared Redis when configured."""
     now = int(time.time()) if now is None else int(now)
     start = now - (now % window_seconds)
+    client = _redis_client()
+    if client is not None:
+        key = f"packetwhisperer:rate:{bucket}:{start}"
+        with client.pipeline(transaction=True) as pipe:
+            pipe.incr(key)
+            pipe.expire(key, window_seconds + 2)
+            hits, _ = pipe.execute()
+        return int(hits) <= limit
     with _connect() as db:
         db.execute("BEGIN IMMEDIATE")
         row = db.execute("SELECT window_start,hits FROM rate_windows WHERE bucket=?", (bucket,)).fetchone()
