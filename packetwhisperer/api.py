@@ -1,14 +1,19 @@
 """HTTP API for PacketWhisperer AI flow analysis."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
+import json
 import logging
 import os
+import time
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel, Field
+from packetwhisperer import security_store as store
 
 from packetwhisperer import __version__
 from packetwhisperer.analyzer import FlowValidationError, analyze_flows, parse_flows
@@ -34,7 +39,95 @@ app = FastAPI(
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 # Multipart boundaries and form fields need some overhead beyond the file.
 MAX_MULTIPART_OVERHEAD = 256 * 1024
+
 MIN_PRODUCTION_TOKEN_BYTES = 32
+RATE_LIMIT = int(os.getenv("PACKETWHISPERER_RATE_LIMIT", "60"))
+RATE_WINDOW_SECONDS = 60
+
+
+def _b64(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _session_secret() -> bytes:
+    return (os.getenv("PACKETWHISPERER_SESSION_SECRET") or os.getenv("PACKETWHISPERER_API_TOKEN", "")).encode()
+
+
+def _issue_session(actor: dict, ttl_seconds: int = 3600) -> str:
+    payload = {"sub": actor["id"], "username": actor["username"], "role": actor["role"], "exp": int(time.time()) + ttl_seconds}
+    body = _b64(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode())
+    return body + "." + _b64(hmac.new(_session_secret(), body.encode(), hashlib.sha256).digest())
+
+
+def _session_actor(token: str) -> dict | None:
+    if "." not in token or len(_session_secret()) < MIN_PRODUCTION_TOKEN_BYTES:
+        return None
+    body, signature = token.split(".", 1)
+    expected = _b64(hmac.new(_session_secret(), body.encode(), hashlib.sha256).digest())
+    if not hmac.compare_digest(signature, expected):
+        return None
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)))
+        if int(payload["exp"]) <= int(time.time()):
+            return None
+        actor = store.get_user(str(payload["sub"]))
+        if not actor or actor["username"] != payload["username"] or actor["role"] != payload["role"]:
+            return None
+        return actor
+    except (ValueError, KeyError, TypeError, json.JSONDecodeError):
+        return None
+
+
+def _actor_from_request(request: Request) -> dict | None:
+    supplied = request.headers.get("authorization", "")
+    if not supplied.startswith("Bearer "):
+        return None
+    token = supplied[7:]
+    actor = _session_actor(token)
+    if actor:
+        return actor
+    expected = os.getenv("PACKETWHISPERER_API_TOKEN", "")
+    if expected and hmac.compare_digest(token, expected):
+        return {"id": "service-token", "username": "service-token", "role": "admin"}
+    return None
+
+
+def _require_roles(request: Request, roles: set[str]) -> dict:
+    actor = _actor_from_request(request)
+    if actor is None:
+        raise HTTPException(status_code=401, detail="Valid bearer token required", headers={"WWW-Authenticate": "Bearer"})
+    if actor["role"] not in roles:
+        store.audit(actor, "authorization.denied", outcome="denied", details={"path": request.url.path})
+        raise HTTPException(status_code=403, detail="Insufficient role")
+    return actor
+
+
+class LoginInput(BaseModel):
+    username: str = Field(min_length=3, max_length=64)
+    password: str = Field(min_length=1, max_length=256)
+
+
+class BootstrapInput(BaseModel):
+    username: str = Field(min_length=3, max_length=64)
+    password: str = Field(min_length=12, max_length=256)
+    bootstrap_token: str = Field(min_length=32, max_length=512)
+
+
+class UserInput(BaseModel):
+    username: str = Field(min_length=3, max_length=64)
+    password: str = Field(min_length=12, max_length=256)
+    role: str = Field(pattern="^(admin|analyst|viewer)$")
+
+
+class CaseInput(BaseModel):
+    title: str = Field(min_length=3, max_length=160)
+    severity: str = Field(default="medium", pattern="^(informational|low|medium|high|critical)$")
+    summary: dict = Field(default_factory=dict)
+    evidence_sha256: str | None = Field(default=None, pattern="^[a-fA-F0-9]{64}$")
+
+
+class CaseStatusInput(BaseModel):
+    status: str = Field(pattern="^(open|investigating|resolved|closed)$")
 
 
 def _production_mode() -> bool:
@@ -48,6 +141,8 @@ def _token_configuration_error() -> str | None:
         return "API authentication is not configured"
     if len(token.encode("utf-8")) < MIN_PRODUCTION_TOKEN_BYTES:
         return f"API token must be at least {MIN_PRODUCTION_TOKEN_BYTES} bytes"
+    if len(_session_secret()) < MIN_PRODUCTION_TOKEN_BYTES:
+        return f"Session signing secret must be at least {MIN_PRODUCTION_TOKEN_BYTES} bytes"
     return None
 
 
@@ -58,16 +153,16 @@ def _access_error(request: Request) -> tuple[int, str] | None:
         config_error = _token_configuration_error()
         if config_error:
             return 503, config_error
-    if not expected:
-        return None
-
     supplied = request.headers.get("authorization", "")
-    prefix = "Bearer "
-    if not supplied.startswith(prefix) or not hmac.compare_digest(
-        supplied[len(prefix):], expected
-    ):
-        return 401, "Valid bearer token required"
-    return None
+    if supplied.startswith("Bearer "):
+        token = supplied[7:]
+        if _session_actor(token) is not None:
+            return None
+        if expected and hmac.compare_digest(token, expected):
+            return None
+    if not expected and not _production_mode():
+        return None
+    return 401, "Valid bearer token required"
 
 
 @app.middleware("http")
@@ -142,6 +237,12 @@ async def security_headers(request: Request, call_next):
         if response is None:
             request._body = bytes(body)
 
+    if response is None and request.url.path.startswith("/v1/"):
+        actor = _actor_from_request(request)
+        identity = actor["id"] if actor else (request.client.host if request.client else "unknown")
+        if not store.allow_request(f"api:{identity}", RATE_LIMIT, RATE_WINDOW_SECONDS):
+            response = JSONResponse(status_code=429, content={"detail": "Rate limit exceeded; retry shortly"}, headers={"Retry-After": str(RATE_WINDOW_SECONDS)})
+            store.audit(actor, "rate_limit.exceeded", outcome="denied", details={"path": request.url.path})
     if response is None:
         response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
@@ -187,12 +288,94 @@ def ready() -> JSONResponse:
     return JSONResponse(content={"status": "ready"})
 
 
+
+@app.post("/v1/auth/bootstrap", tags=["identity"])
+def bootstrap_admin(payload: BootstrapInput) -> dict:
+    """Create the first administrator once, using a deployment-only secret."""
+    configured = os.getenv("PACKETWHISPERER_BOOTSTRAP_TOKEN", "")
+    if not configured or not hmac.compare_digest(payload.bootstrap_token, configured):
+        raise HTTPException(status_code=403, detail="Bootstrap is unavailable or token is invalid")
+    if store.user_count() != 0:
+        raise HTTPException(status_code=409, detail="Initial administrator already exists")
+    try:
+        actor = store.create_user(payload.username, payload.password, "admin")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    store.audit(actor, "identity.bootstrap", "user", actor["id"])
+    return {"user": actor, "message": "Administrator created; remove the bootstrap secret from deployment configuration."}
+
+
+@app.post("/v1/auth/login", tags=["identity"])
+def login(payload: LoginInput, request: Request) -> dict:
+    client_ip = request.client.host if request.client else "unknown"
+    if not store.allow_request(f"login:{client_ip}", 10, 300):
+        raise HTTPException(status_code=429, detail="Too many login attempts; retry later", headers={"Retry-After": "300"})
+    actor = store.authenticate_user(payload.username, payload.password)
+    if not actor:
+        store.audit(None, "identity.login", outcome="denied", details={"username": payload.username[:64]})
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    store.audit(actor, "identity.login", "user", actor["id"])
+    return {"access_token": _issue_session(actor), "token_type": "bearer", "expires_in": 3600, "user": actor}
+
+
+@app.post("/v1/admin/users", tags=["identity"])
+def create_analyst(payload: UserInput, request: Request) -> dict:
+    actor = _require_roles(request, {"admin"})
+    try:
+        user = store.create_user(payload.username, payload.password, payload.role)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        if "UNIQUE constraint failed" in str(exc):
+            raise HTTPException(status_code=409, detail="Username already exists") from exc
+        raise
+    store.audit(actor, "identity.user.create", "user", user["id"], details={"role": user["role"]})
+    return {"user": user}
+
+
+@app.get("/v1/cases", tags=["cases"])
+def cases(request: Request, limit: int = 50, offset: int = 0) -> dict:
+    actor = _require_roles(request, {"admin", "analyst", "viewer"})
+    if not 1 <= limit <= 100 or offset < 0:
+        raise HTTPException(status_code=422, detail="limit must be 1-100 and offset non-negative")
+    store.audit(actor, "case.list", "case", details={"limit": limit, "offset": offset})
+    return {"items": store.list_cases(limit, offset), "limit": limit, "offset": offset}
+
+
+@app.post("/v1/cases", tags=["cases"])
+def case_create(payload: CaseInput, request: Request) -> dict:
+    actor = _require_roles(request, {"admin", "analyst"})
+    try:
+        item = store.create_case(payload.title, payload.severity, payload.summary, payload.evidence_sha256, actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"case": item}
+
+
+@app.patch("/v1/cases/{case_id}", tags=["cases"])
+def case_update(case_id: str, payload: CaseStatusInput, request: Request) -> dict:
+    actor = _require_roles(request, {"admin", "analyst"})
+    item = store.update_case(case_id, payload.status, actor)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return {"case": item}
+
+
+@app.get("/v1/audit", tags=["audit"])
+def audit_events(request: Request, limit: int = 100, offset: int = 0) -> dict:
+    actor = _require_roles(request, {"admin"})
+    if not 1 <= limit <= 200 or offset < 0:
+        raise HTTPException(status_code=422, detail="limit must be 1-200 and offset non-negative")
+    store.audit(actor, "audit.read", "audit_event", details={"limit": limit, "offset": offset})
+    return {"items": store.list_audit(limit, offset), "limit": limit, "offset": offset}
+
+
 @app.post(
     "/v1/analyze/flows",
     tags=["analysis"],
     dependencies=[Depends(require_api_access)],
 )
-async def analyze_upload(file: UploadFile = File(...)) -> JSONResponse:
+async def analyze_upload(request: Request, file: UploadFile = File(...)) -> JSONResponse:
     filename = (file.filename or "").replace("\\", "/").split("/")[-1]
     if not filename.lower().endswith(".csv"):
         await file.close()
@@ -221,6 +404,7 @@ async def analyze_upload(file: UploadFile = File(...)) -> JSONResponse:
         "bytes_received": len(raw),
         "format": "network-flow-csv",
     }
+    store.audit(_actor_from_request(request), "analysis.complete", "evidence", report["evidence"]["sha256"], details={"flow_count": report["flow_count"], "findings_count": report["findings_count"]})
     logger.info(
         "analysis_complete flow_count=%d findings=%d evidence_sha256=%s",
         report["flow_count"],
@@ -235,7 +419,7 @@ async def analyze_upload(file: UploadFile = File(...)) -> JSONResponse:
     tags=["analysis"],
     dependencies=[Depends(require_api_access)],
 )
-async def analyze_capture(file: UploadFile = File(...)) -> JSONResponse:
+async def analyze_capture(request: Request, file: UploadFile = File(...)) -> JSONResponse:
     """Analyze offline PCAP/PCAPNG packet metadata; never enable live capture."""
     filename = (file.filename or "").replace("\\", "/").split("/")[-1]
     if not filename.lower().endswith((".pcap", ".pcapng", ".cap")):
@@ -255,6 +439,7 @@ async def analyze_capture(file: UploadFile = File(...)) -> JSONResponse:
         "bytes_received": len(raw),
         "format": "pcap-or-pcapng",
     }
+    store.audit(_actor_from_request(request), "analysis.pcap.complete", "evidence", report["evidence"]["sha256"], details={"packets_analyzed": report["capture"]["packets_analyzed"], "findings_count": report["findings_count"]})
     logger.info(
         "pcap_analysis_complete packets=%d findings=%d evidence_sha256=%s",
         report["capture"]["packets_analyzed"],
