@@ -7,6 +7,7 @@ production, use a shared transactional database and shared rate-limit store.
 from __future__ import annotations
 
 import hashlib
+from contextlib import contextmanager
 import hmac
 import json
 import os
@@ -32,8 +33,17 @@ def _connect() -> sqlite3.Connection:
     return connection
 
 
+@contextmanager
+def _connection():
+    db = _connect()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 def init_store() -> None:
-    with _connect() as db:
+    with _connection() as db:
         db.executescript("""
         PRAGMA journal_mode=WAL;
         CREATE TABLE IF NOT EXISTS users (
@@ -75,7 +85,7 @@ def create_user(username: str, password: str, role: str) -> dict[str, Any]:
         raise ValueError("Invalid role")
     salt = secrets.token_bytes(16)
     user_id = secrets.token_hex(16)
-    with _connect() as db:
+    with _connection() as db:
         db.execute(
             "INSERT INTO users(id,username,password_hash,salt,role,created_at) VALUES(?,?,?,?,?,?)",
             (user_id, username, _password(password, salt), salt.hex(), role, time.time()),
