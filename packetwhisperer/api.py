@@ -121,6 +121,27 @@ async def security_headers(request: Request, call_next):
                             content={"detail": "Request exceeds upload limit"},
                         )
 
+    # Enforce a hard streaming cap even when Content-Length is absent or
+    # dishonest (for example, chunked transfer). Read at most limit + 1 bytes
+    # before FastAPI/Starlette's multipart parser can spool the upload to disk.
+    # The bounded body is replayed to downstream middleware via Request's cache.
+    if response is None and is_analysis_upload:
+        if request.url.path == "/v1/analyze/flows":
+            body_limit = MAX_UPLOAD_BYTES + MAX_MULTIPART_OVERHEAD
+        else:
+            body_limit = MAX_CAPTURE_BYTES + MAX_MULTIPART_OVERHEAD
+        body = bytearray()
+        async for chunk in request.stream():
+            body.extend(chunk)
+            if len(body) > body_limit:
+                response = JSONResponse(
+                    status_code=413,
+                    content={"detail": "Request exceeds upload limit"},
+                )
+                break
+        if response is None:
+            request._body = bytes(body)
+
     if response is None:
         response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
