@@ -128,3 +128,16 @@ def test_invalid_content_length_is_rejected():
         content=b"x",
     )
     assert response.status_code == 400
+
+
+def test_streaming_upload_without_content_length_is_bounded():
+    # An iterable body has no known length, so HTTPX sends it as a stream.
+    # The middleware must enforce the cap before multipart parsing regardless
+    # of whether Content-Length is supplied by the client.
+    chunk = b"x" * (1024 * 1024)
+    response = client.post(
+        "/v1/analyze/flows",
+        headers={"Content-Type": "multipart/form-data; boundary=streamed"},
+        content=iter([chunk] * 11),
+    )
+    assert response.status_code == 413
