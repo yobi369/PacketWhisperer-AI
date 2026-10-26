@@ -43,7 +43,7 @@ MAX_MULTIPART_OVERHEAD = 256 * 1024
 MIN_PRODUCTION_TOKEN_BYTES = 32
 RATE_LIMIT = int(os.getenv("PACKETWHISPERER_RATE_LIMIT", "60"))
 RATE_WINDOW_SECONDS = 60
-TOKEN_TYPE = "bearer"
+TOKEN_TYPE = "bearer"  # nosec B105 - OAuth token type, not a credential
 
 
 def _b64(data: bytes) -> str:
