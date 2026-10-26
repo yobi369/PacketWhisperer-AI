@@ -51,31 +51,78 @@ def _token_configuration_error() -> str | None:
     return None
 
 
+def _access_error(request: Request) -> tuple[int, str] | None:
+    """Return an HTTP failure before multipart parsing when access is invalid."""
+    expected = os.getenv("PACKETWHISPERER_API_TOKEN", "")
+    if _production_mode():
+        config_error = _token_configuration_error()
+        if config_error:
+            return 503, config_error
+    if not expected:
+        return None
+
+    supplied = request.headers.get("authorization", "")
+    prefix = "Bearer "
+    if not supplied.startswith(prefix) or not hmac.compare_digest(
+        supplied[len(prefix):], expected
+    ):
+        return 401, "Valid bearer token required"
+    return None
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
-    # Reject oversized declared requests before Starlette parses multipart data.
-    # The bounded file reads below remain necessary for requests without a
-    # trustworthy Content-Length header.
-    if request.url.path == "/v1/analyze/flows":
-        request_limit = MAX_UPLOAD_BYTES + MAX_MULTIPART_OVERHEAD
-    elif request.url.path == "/v1/analyze/pcap":
-        request_limit = MAX_CAPTURE_BYTES + MAX_MULTIPART_OVERHEAD
-    else:
-        request_limit = None
+    # Authenticate before Starlette parses multipart bodies. This prevents
+    # unauthenticated clients from making the app spend resources parsing files.
+    # The endpoint dependency repeats the check as defense in depth.
+    is_analysis_upload = request.url.path in {
+        "/v1/analyze/flows",
+        "/v1/analyze/pcap",
+    }
+    response = None
+    if is_analysis_upload:
+        failure = _access_error(request)
+        if failure:
+            status_code, detail = failure
+            headers = {"WWW-Authenticate": "Bearer"} if status_code == 401 else {}
+            response = JSONResponse(
+                status_code=status_code,
+                content={"detail": detail},
+                headers=headers,
+            )
 
-    if request_limit is not None:
-        content_length = request.headers.get("content-length")
-        if content_length:
-            try:
-                declared_length = int(content_length)
-            except ValueError:
-                return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length"})
-            if declared_length < 0:
-                return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length"})
-            if declared_length > request_limit:
-                return JSONResponse(status_code=413, content={"detail": "Request exceeds upload limit"})
+    # Reject oversized declared requests before multipart parsing. Bounded file
+    # reads below remain necessary for requests without Content-Length.
+    if response is None:
+        if request.url.path == "/v1/analyze/flows":
+            request_limit = MAX_UPLOAD_BYTES + MAX_MULTIPART_OVERHEAD
+        elif request.url.path == "/v1/analyze/pcap":
+            request_limit = MAX_CAPTURE_BYTES + MAX_MULTIPART_OVERHEAD
+        else:
+            request_limit = None
 
-    response = await call_next(request)
+        if request_limit is not None:
+            content_length = request.headers.get("content-length")
+            if content_length:
+                try:
+                    declared_length = int(content_length)
+                except ValueError:
+                    response = JSONResponse(
+                        status_code=400, content={"detail": "Invalid Content-Length"}
+                    )
+                else:
+                    if declared_length < 0:
+                        response = JSONResponse(
+                            status_code=400, content={"detail": "Invalid Content-Length"}
+                        )
+                    elif declared_length > request_limit:
+                        response = JSONResponse(
+                            status_code=413,
+                            content={"detail": "Request exceeds upload limit"},
+                        )
+
+    if response is None:
+        response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
@@ -88,24 +135,11 @@ async def security_headers(request: Request, call_next):
 
 def require_api_access(request: Request) -> None:
     """Require bearer auth when configured; fail closed in production."""
-    expected = os.getenv("PACKETWHISPERER_API_TOKEN", "")
-    if _production_mode():
-        config_error = _token_configuration_error()
-        if config_error:
-            raise HTTPException(status_code=503, detail=config_error)
-    if not expected:
-        return
-
-    supplied = request.headers.get("authorization", "")
-    prefix = "Bearer "
-    if not supplied.startswith(prefix) or not hmac.compare_digest(
-        supplied[len(prefix):], expected
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="Valid bearer token required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    failure = _access_error(request)
+    if failure:
+        status_code, detail = failure
+        headers = {"WWW-Authenticate": "Bearer"} if status_code == 401 else {}
+        raise HTTPException(status_code=status_code, detail=detail, headers=headers)
 
 
 @app.get("/", include_in_schema=False)
