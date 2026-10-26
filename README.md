@@ -44,7 +44,7 @@ export PACKETWHISPERER_API_TOKEN='use-a-long-random-secret-from-your-secret-mana
 uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 ```
 
-Analysis endpoints require `Authorization: Bearer <token>` when a token is configured. Production mode fails readiness and rejects analysis requests if the token is missing. Do not commit secrets or expose the service directly to the public internet.
+Analysis endpoints require `Authorization: Bearer <token>` when a token is configured. Requests are authenticated in middleware before multipart upload parsing, and production mode fails readiness and rejects analysis requests if the token is missing or too short. Do not commit secrets or expose the service directly to the public internet.
 
 Run tests:
 
@@ -83,9 +83,9 @@ See [`docs/RESEARCH_BRIEF.md`](docs/RESEARCH_BRIEF.md) for the research question
 
 1. Hardened, tested flow and offline PCAP/PCAPNG analysis APIs.
 2. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
-4. Case management, role-based access, audit persistence, and retention controls.
-5. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
-6. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
+3. Case management, role-based access, audit persistence, and retention controls.
+4. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
+5. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
 
 ## Responsible use
 
