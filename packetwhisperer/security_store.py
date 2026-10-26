@@ -61,6 +61,12 @@ class _Database:
     def close(self):
         self.connection.close()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        self.close()
+
 
 def _connect():
     if DATABASE_URL:
