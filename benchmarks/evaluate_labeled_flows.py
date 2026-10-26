@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import io
 from collections import defaultdict
 from pathlib import Path
 
@@ -47,10 +48,11 @@ def evaluate_labeled(path: Path, dataset_name: str, provenance: str) -> dict:
     results = []
     all_rules = set()
     for scenario_id, group in sorted(groups.items()):
-        csv_text = ",".join(FLOW_COLUMNS) + "\n"
-        for row in group["rows"]:
-            csv_text += ",".join(str(row[key]) for key in FLOW_COLUMNS) + "\n"
-        report = analyze_flows(parse_flows(csv_text.encode("utf-8")))
+        buffer = io.StringIO(newline="")
+        writer = csv.DictWriter(buffer, fieldnames=FLOW_COLUMNS)
+        writer.writeheader()
+        writer.writerows(group["rows"])
+        report = analyze_flows(parse_flows(buffer.getvalue().encode("utf-8")))
         actual, expected = {f["rule_id"] for f in report["findings"]}, group["expected"]
         all_rules |= actual | expected
         results.append({
