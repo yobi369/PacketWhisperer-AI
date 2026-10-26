@@ -4,3 +4,5 @@ python-multipart>=0.0.9
 scapy>=2.6,<3.0
 pytest>=9.0.3,<10.0
 httpx>=0.27,<1.0
+redis>=5.0,<7.0
+psycopg[binary]>=3.2,<4.0

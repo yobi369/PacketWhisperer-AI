@@ -44,21 +44,30 @@ export PACKETWHISPERER_API_TOKEN='use-a-long-random-secret-from-your-secret-mana
 uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 ```
 
-Analysis endpoints require `Authorization: Bearer <token>` when a token is configured. Production mode fails readiness and rejects analysis requests if the token is missing. Do not commit secrets or expose the service directly to the public internet.
+Analysis endpoints require `Authorization: Bearer <token>` when a token is configured. Requests are authenticated in middleware before multipart upload parsing, and production mode fails readiness and rejects analysis requests if the token is missing or too short. Do not commit secrets or expose the service directly to the public internet.
 
-Run tests:
+## Individual accounts, roles, cases and audit
+
+The API includes individual accounts with PBKDF2-HMAC-SHA256 password hashes, one-hour signed bearer sessions, admin/analyst/viewer roles, login throttling, a fixed-window API rate limiter, case records, and an application audit-event table. The first administrator is created once through `POST /v1/auth/bootstrap` using `PACKETWHISPERER_BOOTSTRAP_TOKEN`; remove that bootstrap secret immediately after use. Log in at `POST /v1/auth/login`, then send the returned token as `Authorization: Bearer <access_token>`. Only administrators can create users (`POST /v1/admin/users`) and read audit events (`GET /v1/audit`); analysts and administrators can create/update cases, while viewers are read-only.
+
+Set `PACKETWHISPERER_SESSION_SECRET` to a separate random secret of at least 32 bytes and `PACKETWHISPERER_API_TOKEN` to a separate service-compatibility token. The code supports PostgreSQL for accounts, cases, audit events, and rate-limit windows, and Redis for atomic shared rate limiting. **These are optional backends, not evidence that the deployed infrastructure is configured.**
+
+### No-cost deployment: explicit limitations
+
+This project is currently kept on a no-cost hosting setup; no paid database or other paid resource should be provisioned for this deployment.
+
+- **Durability is not guaranteed.** If `DATABASE_URL` is unset, SQLite is used. On an ephemeral host filesystem, its file may be lost on restart, redeploy, or instance replacement. Accounts, cases, audit events, and local rate-limit windows may disappear. There is no verified durable backup/restore path in the current no-cost profile. Do not treat deployed case/audit history as a reliable archive.
+- **Rate limits are not distributed.** If `REDIS_URL` is unset, rate limiting is process-local; counters can reset and separate instances do not share them. Keep gateway/proxy-level controls enabled and do not rely on application-local limits as the only abuse defense.
+- Do not reuse the ShuleLedger database. If suitable persistent/shared services become available later, configure a dedicated database via `DATABASE_URL` and Redis-compatible service via `REDIS_URL`, then test persistence across redeploys, backup restoration, and cross-instance throttling before claiming these properties are operational.
+
+## Run tests and synthetic benchmark
 
 ```bash
 pytest -q
-```
-
-Run the deterministic synthetic rule benchmark:
-
-```bash
 python benchmarks/evaluate_synthetic.py
 ```
 
-The benchmark reports per-rule precision/recall on three generated sanity scenarios. These scores validate only expected rule behavior; they are not real-world detection-quality estimates.
+The synthetic benchmark reports per-rule metrics for generated sanity scenarios only. It is not a real-world detection-quality estimate.
 
 ## API
 
@@ -67,25 +76,17 @@ The benchmark reports per-rule precision/recall on three generated sanity scenar
 - `POST /v1/analyze/flows` — multipart CSV upload; returns a SHA-256 fingerprint, summary, and explainable findings.
 - `POST /v1/analyze/pcap` — multipart `.pcap`, `.pcapng`, or `.cap` upload; analyzes packet metadata with 20 MiB and 100,000-packet limits.
 
-## Detection behavior
+## Detection behavior and validation status
 
-The baseline engine uses transparent heuristics such as destination-port fan-out, repeated destination-port concentration, and unusually large flow byte counts. These are investigation leads, not proof of compromise. Thresholds are configurable in code and should be calibrated against representative benign and malicious datasets before operational use.
+The baseline engine uses transparent heuristics such as destination-port fan-out, repeated destination-port concentration, and unusually large flow byte counts. These are investigation leads, not proof of compromise. Thresholds should be calibrated against representative benign and malicious datasets.
+
+**Real-world detection accuracy has not been established.** Run `benchmarks/evaluate_labeled_flows.py` with an authorized, representative labeled dataset and record the dataset source, collection/authorization basis, labeling method, limitations, and actual measured metrics. Do not invent benchmark results or present synthetic test scores as field accuracy.
 
 ## Security and production status
 
-Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The service is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, persistent case management, and external LLM integrations are not claimed as implemented.
+This is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, and validated production detection are not claimed. An external security-review checklist is available in `docs/EXTERNAL_SECURITY_REVIEW.md`, but an independent review is **not** claimed complete. Before operational use, verify durable storage, backups/restores, distributed rate limiting, retention controls, and independent security review.
 
-## Technical brief
-
-See [`docs/RESEARCH_BRIEF.md`](docs/RESEARCH_BRIEF.md) for the research question, evaluation methodology, security boundaries, and an honest summary of limitations. For a live walkthrough, use [`docs/DEMO.md`](docs/DEMO.md) and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
-
-## Roadmap
-
-1. Hardened, tested flow and offline PCAP/PCAPNG analysis APIs.
-2. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
-4. Case management, role-based access, audit persistence, and retention controls.
-5. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
-6. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
+See [`docs/RESEARCH_BRIEF.md`](docs/RESEARCH_BRIEF.md), [`docs/DEMO.md`](docs/DEMO.md), and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Responsible use
 
