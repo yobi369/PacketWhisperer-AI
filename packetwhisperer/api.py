@@ -178,15 +178,22 @@ async def security_headers(request: Request, call_next):
     }
     response = None
     if is_analysis_upload:
-        failure = _access_error(request)
-        if failure:
-            status_code, detail = failure
-            headers = {"WWW-Authenticate": "Bearer"} if status_code == 401 else {}
-            response = JSONResponse(
-                status_code=status_code,
-                content={"detail": detail},
-                headers=headers,
-            )
+        # Bound unauthenticated upload attempts before reading their bodies.
+        client_ip = request.client.host if request.client else "unknown"
+        if not store.allow_request(f"upload-preauth:{client_ip}", 30, RATE_WINDOW_SECONDS):
+            response = JSONResponse(status_code=429, content={"detail": "Upload rate limit exceeded"}, headers={"Retry-After": str(RATE_WINDOW_SECONDS)})
+            store.audit(None, "upload.rate_limit.exceeded", outcome="denied", details={"path": request.url.path})
+        else:
+            failure = _access_error(request)
+            if failure:
+                status_code, detail = failure
+                headers = {"WWW-Authenticate": "Bearer"} if status_code == 401 else {}
+                store.audit(None, "authentication.denied", outcome="denied", details={"path": request.url.path, "status": status_code})
+                response = JSONResponse(
+                    status_code=status_code,
+                    content={"detail": detail},
+                    headers=headers,
+                )
 
     # Reject oversized declared requests before multipart parsing. Bounded file
     # reads below remain necessary for requests without Content-Length.
