@@ -96,6 +96,8 @@ def _require_roles(request: Request, roles: set[str]) -> dict:
     actor = _actor_from_request(request)
     if actor is None:
         raise HTTPException(status_code=401, detail="Valid bearer token required", headers={"WWW-Authenticate": "Bearer"})
+    if actor["id"] == "service-token":
+        raise HTTPException(status_code=403, detail="Create an individual administrator account for identity and case-management operations")
     if actor["role"] not in roles:
         store.audit(actor, "authorization.denied", outcome="denied", details={"path": request.url.path})
         raise HTTPException(status_code=403, detail="Insufficient role")
@@ -262,6 +264,12 @@ def require_api_access(request: Request) -> None:
         status_code, detail = failure
         headers = {"WWW-Authenticate": "Bearer"} if status_code == 401 else {}
         raise HTTPException(status_code=status_code, detail=detail, headers=headers)
+    if _production_mode():
+        actor = _actor_from_request(request)
+        if actor is None:
+            raise HTTPException(status_code=401, detail="Valid bearer token required", headers={"WWW-Authenticate": "Bearer"})
+        if actor["role"] == "viewer":
+            raise HTTPException(status_code=403, detail="Analyst or administrator role required")
 
 
 @app.get("/", include_in_schema=False)
