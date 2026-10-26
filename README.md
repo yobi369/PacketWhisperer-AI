@@ -46,6 +46,12 @@ uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 
 Analysis endpoints require `Authorization: Bearer <token>` when a token is configured. Requests are authenticated in middleware before multipart upload parsing, and production mode fails readiness and rejects analysis requests if the token is missing or too short. Do not commit secrets or expose the service directly to the public internet.
 
+### Individual accounts, roles, cases and audit
+
+The API now includes individual accounts with PBKDF2-HMAC-SHA256 password hashes, one-hour signed bearer sessions, admin/analyst/viewer roles, login throttling, a fixed-window API rate limiter, case records, and an append-only application audit-event table. The first administrator is created once through `POST /v1/auth/bootstrap` using `PACKETWHISPERER_BOOTSTRAP_TOKEN`; remove that bootstrap secret immediately after use. Log in at `POST /v1/auth/login`, then send the returned token as `Authorization: Bearer <access_token>`. Only administrators can create users (`POST /v1/admin/users`) and read audit events (`GET /v1/audit`); analysts and administrators can create/update cases, while viewers are read-only.
+
+Set `PACKETWHISPERER_SESSION_SECRET` to a separate random secret of at least 32 bytes, `PACKETWHISPERER_API_TOKEN` to a separate service-compatibility token, and `PACKETWHISPERER_DB_PATH` to a persistent database file path. SQLite is suitable for development or a single instance with a persistent disk; its rate-limit counter is not distributed across multiple instances. The default Render Free filesystem is ephemeral, so do not claim durable records there: attach persistent storage or migrate the store to a managed shared database before relying on case/audit retention or multi-instance rate limits. Configure HTTPS and trusted proxy behavior at the deployment edge. Never log passwords, session tokens, packet payloads, or secrets.
+
 Run tests:
 
 ```bash
