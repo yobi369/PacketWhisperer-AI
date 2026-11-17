@@ -83,9 +83,9 @@ See [`docs/RESEARCH_BRIEF.md`](docs/RESEARCH_BRIEF.md) for the research question
 
 1. Hardened, tested flow and offline PCAP/PCAPNG analysis APIs.
 2. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
-4. Case management, role-based access, audit persistence, and retention controls.
-5. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
-6. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
+3. Case management, role-based access, audit persistence, and retention controls.
+4. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
+5. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
 
 ## Responsible use
 
