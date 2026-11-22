@@ -90,7 +90,7 @@ The baseline engine uses transparent heuristics such as destination-port fan-out
 
 ## Security and production status
 
-Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The service is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, persistent case management, and external LLM integrations are not claimed as implemented.
+Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The service is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, and a production-grade multi-tenant case-management system are not claimed. The competition web client adds Firebase AI Logic hybrid explanation of structured findings; this does not replace deterministic detections or independently validate threat conclusions.
 
 ## Technical brief
 
@@ -102,7 +102,7 @@ See [`docs/RESEARCH_BRIEF.md`](docs/RESEARCH_BRIEF.md) for the research question
 2. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
 3. Case management, role-based access, audit persistence, and retention controls.
 4. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
-5. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
+5. Expand hybrid AI explanations with richer evidence references, privacy controls, and evaluation against analyst-reviewed cases.
 
 ## Responsible use
 
