@@ -44,6 +44,7 @@ if (!missing.length) {
 export function firebaseStatus() {
   return {
     configured: Boolean(app && ai && auth && db && appCheckReady),
+    authConfigured: Boolean(auth),
     missing,
     appCheckReady,
   };
