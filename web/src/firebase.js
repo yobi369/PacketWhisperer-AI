@@ -61,7 +61,7 @@ export async function getAnalystIdToken() {
   return user.getIdToken();
 }
 
-export async function explainFindings(prompt, report) {
+export async function explainFindings(prompt, report, allowCloudFallback = false) {
   if (!ai) throw new Error("Firebase AI Logic is not configured.");
   await ensureAnalystSession();
 
@@ -79,8 +79,11 @@ export async function explainFindings(prompt, report) {
     evidence_sha256: report.evidence?.sha256 ?? null,
   };
 
+  const inferenceMode = allowCloudFallback
+    ? InferenceMode.PREFER_ON_DEVICE
+    : InferenceMode.ONLY_ON_DEVICE;
   const model = getGenerativeModel(ai, {
-    mode: InferenceMode.PREFER_ON_DEVICE,
+    mode: inferenceMode,
     generationConfig: { temperature: 0.2, maxOutputTokens: 700 },
   });
   const instruction = [
@@ -99,8 +102,8 @@ export async function explainFindings(prompt, report) {
   const result = await model.generateContent(instruction);
   const source = result.response.inferenceSource ?? "UNKNOWN";
   const answer = result.response.text();
-  await saveInvestigation({ question: prompt, answer, inferenceSource: source, evidenceHash: evidence.evidence_sha256, findingCount: evidence.findings.length });
-  return { answer, source };
+  await saveInvestigation({ question: prompt, answer, inferenceSource: source, inferenceMode, evidenceHash: evidence.evidence_sha256, findingCount: evidence.findings.length });
+  return { answer, source, inferenceMode };
 }
 
 async function saveInvestigation(record) {
