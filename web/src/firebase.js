@@ -104,8 +104,13 @@ export async function explainFindings(prompt, report) {
 
 async function saveInvestigation(record) {
   if (!db || !auth?.currentUser) return;
-  await addDoc(collection(db, "users", auth.currentUser.uid, "investigations"), {
-    ...record,
-    createdAt: serverTimestamp(),
-  });
+  try {
+    await addDoc(collection(db, "users", auth.currentUser.uid, "investigations"), {
+      ...record,
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    // A Firestore write failure must not discard a successful AI response.
+    console.warn("Investigation metadata could not be saved:", error.code || error.message);
+  }
 }
