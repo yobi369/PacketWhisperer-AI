@@ -67,6 +67,23 @@ The benchmark reports per-rule precision/recall on three generated sanity scenar
 - `POST /v1/analyze/flows` — multipart CSV upload; returns a SHA-256 fingerprint, summary, and explainable findings.
 - `POST /v1/analyze/pcap` — multipart `.pcap`, `.pcapng`, or `.cap` upload; analyzes packet metadata with 20 MiB and 100,000-packet limits.
 
+## Hybrid SOC web client
+
+The competition web client lives in [web/](web/README.md). It uses Firebase AI Logic hybrid inference with `PREFER_ON_DEVICE`, displays the SDK-reported inference source, and sends only a minimized structured findings summary to the model. The original deterministic FastAPI analysis engine remains the source of network evidence.
+
+Run the web client with:
+
+```bash
+cd web
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+For production API access, configure `PACKETWHISPERER_CORS_ORIGINS` with the exact deployed web origin. Configure Firebase Admin verification on the API using `FIREBASE_SERVICE_ACCOUNT_JSON` (a JSON service-account credential stored as a server-side secret) and `FIREBASE_PROJECT_ID`. When Firebase Admin credentials are configured, analysis endpoints accept verified Firebase Authentication ID tokens instead of the shared bearer token. Never expose service-account credentials or shared production bearer tokens in browser code.
+
+See [web/README.md](web/README.md) for Firebase setup, App Check, Firestore rules, API authentication and hybrid inference limitations.
+
 ## Detection behavior
 
 The baseline engine uses transparent heuristics such as destination-port fan-out, repeated destination-port concentration, and unusually large flow byte counts. These are investigation leads, not proof of compromise. Thresholds are configurable in code and should be calibrated against representative benign and malicious datasets before operational use.
