@@ -20,6 +20,20 @@ Competition web client for #BuildHybridAI 2026. This app preserves the existing 
 - A deployed or locally running PacketWhisperer FastAPI service.
 - For on-device inference: desktop Chrome 139+ with the required Prompt API / Gemini Nano configuration and model available. Otherwise, hybrid mode may use cloud inference.
 
+## Firebase Console setup
+
+Complete these steps in the same Firebase project before expecting hybrid inference to work:
+
+1. Register a Web app under Project settings and copy its Firebase web configuration into `.env.local`.
+2. In Firebase AI Logic, enable the Gemini Developer API backend for the project.
+3. In Authentication > Sign-in method, enable **Anonymous** sign-in.
+4. Create a Cloud Firestore database.
+5. In App Check, register the web app with a reCAPTCHA v3 site key and configure enforcement for Firebase AI Logic. Do not add localhost to the reCAPTCHA allowed domains to bypass local attestation.
+6. For local development, use the App Check debug token flow described above and register the generated token under the app's Manage debug tokens panel. Debug tokens are private and must never be shipped in production.
+7. Deploy `firestore.rules` from this repository before testing investigation persistence.
+
+App Check enforcement and Firebase AI Logic project enablement are Firebase Console settings; initializing the SDK in source code does not automatically enable them.
+
 ## Local setup
 
 ```bash
