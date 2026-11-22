@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080d17" />
+  <meta name="description" content="Evidence-first network investigations with private on-device and cloud-assisted AI." />
+  <title>PacketWhisperer — Hybrid SOC</title>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="PacketWhisperer home"><span class="brand-mark">⌁</span><span><b>PACKETWHISPERER</b><small>HYBRID SECURITY OPERATIONS</small></span></a>
+      <div class="top-status"><span class="status-dot"></span><span id="system-status">INITIALIZING SYSTEM</span><span class="version">BUILD 0.1.0</span></div>
+    </header>
+    <main class="layout">
+      <section class="intro">
+        <div><p class="eyebrow">EVIDENCE-FIRST NETWORK INTELLIGENCE</p><h1>Investigate with <em>clarity.</em><br/>Keep sensitive evidence close.</h1><p class="lede">Deterministic network analysis meets hybrid AI. Start with verifiable signals, then ask for an explanation using on-device inference when available or a cloud fallback when needed.</p></div>
+        <div class="architecture" aria-label="Hybrid inference architecture"><div class="node"><span>01</span><b>LOCAL</b><small>Private reasoning</small></div><div class="link-line"></div><div class="node cloud"><span>02</span><b>CLOUD</b><small>Fallback reasoning</small></div></div>
+      </section>
+      <section class="workspace">
+        <aside class="panel ingest">
+          <div class="panel-title"><div><p class="eyebrow">01 / INGEST</p><h2>Evidence intake</h2></div><span class="tag">BOUNDED</span></div>
+          <p class="muted">Analyze traffic you own or are explicitly authorized to inspect. Evidence is processed by your configured PacketWhisperer API.</p>
+          <label class="field-label" for="api-url">Analysis API endpoint</label><input id="api-url" type="url" placeholder="https://your-api.example.com" autocomplete="url"/>
+          <label class="field-label" for="api-token">API bearer token <span class="optional">OPTIONAL</span></label><input id="api-token" type="password" placeholder="Provided by your API operator" autocomplete="off"/>
+          <label class="field-label" for="evidence-file">Network evidence</label>
+          <div class="dropzone"><div class="upload-icon">↥</div><b>Choose a traffic file</b><p>CSV flow records or offline PCAP / PCAPNG</p><input id="evidence-file" type="file" accept=".csv,.pcap,.pcapng,.cap,text/csv,application/octet-stream"/></div>
+          <button id="analyze-btn" class="primary" disabled>Analyze evidence <span>→</span></button>
+          <p id="ingest-message" class="notice" role="status">Connect an analysis API and choose a file to begin.</p>
+          <div class="privacy-note"><span>◇</span><p><b>Evidence boundary</b><br/>Raw capture bytes are sent only to the analysis API you configure. AI receives a minimized findings summary, not the raw capture.</p></div>
+        </aside>
+        <section class="results-column">
+          <div class="panel summary-panel">
+            <div class="panel-title"><div><p class="eyebrow">02 / SIGNAL</p><h2>Investigation snapshot</h2></div><span id="evidence-state" class="tag neutral">AWAITING EVIDENCE</span></div>
+            <div id="empty-state" class="empty-state"><div class="empty-glyph">⌁</div><h3>No investigation loaded</h3><p>Upload a supported traffic file to generate deterministic findings and an evidence fingerprint.</p></div>
+            <div id="report-view" class="hidden">
+              <div class="metrics"><div class="metric"><small>RECORDS / PACKETS</small><b id="metric-records">—</b></div><div class="metric"><small>FINDINGS</small><b id="metric-findings">—</b></div><div class="metric"><small>HIGH / CRITICAL</small><b id="metric-severity">—</b></div><div class="metric"><small>EVIDENCE SIZE</small><b id="metric-size">—</b></div></div>
+              <div class="evidence-hash"><span>SHA-256 EVIDENCE FINGERPRINT</span><code id="evidence-hash">—</code></div>
+              <div class="findings-head"><h3>Deterministic findings</h3><span id="findings-count" class="muted">0 records</span></div>
+              <div id="findings-list" class="findings-list"></div>
+            </div>
+          </div>
+          <div class="panel analyst-panel">
+            <div class="panel-title"><div><p class="eyebrow">03 / EXPLAIN</p><h2>Hybrid AI analyst</h2></div><span id="inference-badge" class="tag neutral">NOT CONNECTED</span></div>
+            <p class="muted">Ask one focused question about the loaded findings. Firebase AI Logic prefers local inference and automatically falls back to the cloud when local inference is unavailable.</p>
+            <div class="prompt-row"><textarea id="analyst-prompt" rows="3" placeholder="Example: Explain the strongest evidence for a scan-like pattern and list safe validation steps." disabled></textarea><button id="ask-btn" class="primary ask" disabled>Analyze <span>↗</span></button></div>
+            <div class="ai-meta"><span id="ai-mode">PREFER_ON_DEVICE</span><span>Single-turn evidence-grounded analysis</span></div>
+            <div id="ai-output" class="ai-output"><span class="muted">The analyst will explain findings without treating heuristics as proof of compromise.</span></div>
+          </div>
+        </section>
+      </section>
+      <footer><span>PACKETWHISPERER AI · RESEARCH BUILD</span><span>Evidence before claims. Human review before action.</span><a href="https://github.com/yobi369/PacketWhisperer-AI" target="_blank" rel="noreferrer">SOURCE REPOSITORY ↗</a></footer>
+    </main>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
