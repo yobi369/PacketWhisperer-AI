@@ -5,7 +5,7 @@ Competition web client for #BuildHybridAI 2026. This app preserves the existing 
 ## Architecture
 
 - **Deterministic analysis:** the existing PacketWhisperer API analyzes CSV flow records and offline PCAP/PCAPNG metadata.
-- **Hybrid AI:** Firebase AI Logic uses `PREFER_ON_DEVICE`; the SDK attempts Chrome on-device inference and falls back to the cloud model when local inference is unavailable.
+- **Hybrid AI:** Firebase AI Logic uses `ONLY_ON_DEVICE` by default. If the analyst explicitly enables cloud fallback, it uses `PREFER_ON_DEVICE` so the SDK attempts Chrome on-device inference and falls back to the cloud model when local inference is unavailable.
 - **Evidence minimization:** only a bounded structured summary of returned findings is included in the AI prompt. Raw capture bytes are never sent to Firebase AI Logic.
 - **Identity and persistence:** anonymous Firebase Authentication sessions scope investigation metadata in Firestore. No raw PCAP, packet payload, or uploaded CSV is persisted by this client.
 - **App Check:** Firebase App Check is initialized before Firebase AI Logic use. Use debug tokens only for development and a registered reCAPTCHA v3 provider for production.
@@ -67,7 +67,7 @@ The service-account JSON must be stored as a secret in the backend hosting provi
 
 ## Hybrid inference behavior
 
-The app calls `getGenerativeModel(..., { mode: InferenceMode.PREFER_ON_DEVICE })` and reads `result.response.inferenceSource`. The UI labels the observed source as `ON_DEVICE` or `IN_CLOUD`. Do not describe an inference request as local unless the SDK reports `ON_DEVICE`.
+The app defaults to `getGenerativeModel(..., { mode: InferenceMode.ONLY_ON_DEVICE })`. When the analyst checks the cloud-fallback consent control, it uses `InferenceMode.PREFER_ON_DEVICE`. The app reads `result.response.inferenceSource`. The UI labels the observed source as `ON_DEVICE` or `IN_CLOUD`. Do not describe an inference request as local unless the SDK reports `ON_DEVICE`.
 
 On-device inference is currently limited by Chrome desktop support, model availability, and supported input capabilities. This implementation uses a single-turn text prompt with structured findings because hybrid on-device multi-turn chat and tool calling are not supported.
 
