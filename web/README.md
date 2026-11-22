@@ -49,7 +49,21 @@ pip install -e ".[test]"
 uvicorn packetwhisperer.api:app --host 127.0.0.1 --port 8000
 ```
 
-Enter `http://127.0.0.1:8000` as the analysis API endpoint in the web app. If the backend has `PACKETWHISPERER_API_TOKEN` configured, enter that bearer token in the UI. Configure CORS on the API for the deployed web origin before production use; do not disable browser security controls.
+Enter `http://127.0.0.1:8000` as the analysis API endpoint in the web app. Configure the backend CORS allowlist for the web origin:
+
+```bash
+export PACKETWHISPERER_CORS_ORIGINS="http://localhost:5173,https://your-deployed-web-origin"
+```
+
+For a deployed app, configure Firebase Admin verification on the API using server-side secrets (never Vite variables):
+
+```bash
+export APP_ENV=production
+export FIREBASE_PROJECT_ID="your-firebase-project-id"
+export FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", "...":"..."}'
+```
+
+The service-account JSON must be stored as a secret in the backend hosting provider. With this setting, the web client signs in anonymously through Firebase Authentication and sends its short-lived Firebase ID token to the API; the backend verifies it using Firebase Admin. If Firebase Admin credentials are not configured, the legacy `PACKETWHISPERER_API_TOKEN` bearer gate remains available for local/single-operator testing only. Do not put a shared production bearer token in a public browser app.
 
 ## Hybrid inference behavior
 
