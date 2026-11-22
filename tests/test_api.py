@@ -65,3 +65,40 @@ def test_security_headers_and_no_store_for_analysis(monkeypatch):
     report = client.post("/v1/analyze/flows", files={"file": ("flows.csv", csv, "text/csv")})
     assert report.status_code == 200
     assert report.headers["cache-control"] == "no-store"
+
+
+def test_firebase_id_token_authentication(monkeypatch):
+    import packetwhisperer.api as api_module
+
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"project_id":"test-project"}')
+    monkeypatch.delenv("PACKETWHISPERER_API_TOKEN", raising=False)
+    monkeypatch.setattr(api_module, "_verify_firebase_id_token", lambda token: token == "valid-id-token")
+    csv = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\\n"
+
+    denied = client.post(
+        "/v1/analyze/flows",
+        headers={"Authorization": "Bearer invalid-token"},
+        files={"file": ("flows.csv", csv, "text/csv")},
+    )
+    assert denied.status_code == 401
+
+    allowed = client.post(
+        "/v1/analyze/flows",
+        headers={"Authorization": "Bearer valid-id-token"},
+        files={"file": ("flows.csv", csv, "text/csv")},
+    )
+    assert allowed.status_code == 200
+
+
+def test_web_client_cors_preflight():
+    response = client.options(
+        "/v1/analyze/flows",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
