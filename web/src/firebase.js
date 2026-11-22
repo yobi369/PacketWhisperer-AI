@@ -68,13 +68,14 @@ export async function explainFindings(prompt, report, allowCloudFallback = false
   // Send only a minimized, structured report. Never send uploaded packet bytes.
   const evidence = {
     flow_count: report.flow_count ?? report.capture?.packets_analyzed ?? null,
-    findings: (report.findings ?? []).slice(0, 30).map((finding) => ({
-      rule_id: finding.rule_id ?? finding.rule ?? "unspecified",
-      title: finding.title ?? finding.name ?? "Finding",
-      severity: finding.severity ?? "unknown",
-      description: finding.description ?? finding.summary ?? "",
-      evidence: finding.evidence ?? finding.observations ?? [],
-      confidence: finding.confidence ?? null,
+    findings: (report.findings ?? []).slice(0, 20).map((finding) => ({
+      rule_id: String(finding.rule_id ?? finding.rule ?? "unspecified").slice(0, 100),
+      title: String(finding.title ?? finding.name ?? "Finding").slice(0, 160),
+      severity: String(finding.severity ?? "unknown").slice(0, 24),
+      description: String(finding.interpretation ?? finding.description ?? finding.summary ?? "").slice(0, 500),
+      evidence: String(typeof finding.evidence === "string" ? finding.evidence : finding.observations ?? "").slice(0, 500),
+      signal: finding.observed ?? finding.observed_unique_destination_ports ?? finding.observed_unique_destinations ?? finding.observed_bytes ?? null,
+      threshold: finding.threshold ?? finding.threshold_bytes ?? null,
     })),
     evidence_sha256: report.evidence?.sha256 ?? null,
   };
