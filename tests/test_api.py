@@ -74,7 +74,7 @@ def test_firebase_id_token_authentication(monkeypatch):
     monkeypatch.setenv("FIREBASE_SERVICE_ACCOUNT_JSON", '{"project_id":"test-project"}')
     monkeypatch.delenv("PACKETWHISPERER_API_TOKEN", raising=False)
     monkeypatch.setattr(api_module, "_verify_firebase_id_token", lambda token: token == "valid-id-token")
-    csv = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\\n"
+    csv = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\n10.0.0.1,10.0.0.2,50000,443,TCP,100,2,1.0\n"
 
     denied = client.post(
         "/v1/analyze/flows",
