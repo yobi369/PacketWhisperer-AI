@@ -28,9 +28,9 @@ if (!missing.length) {
   const debugAppCheck = env.DEV && env.VITE_APPCHECK_DEBUG === "true";
   const siteKey = env.VITE_RECAPTCHA_V3_SITE_KEY;
   if (debugAppCheck) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-  if (siteKey || debugAppCheck) {
+  if (siteKey) {
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey || "debug"),
+      provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true,
     });
     appCheckReady = true;
