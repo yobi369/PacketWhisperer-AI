@@ -6,14 +6,15 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly([
-          "question", "answer", "inferenceSource", "evidenceHash",
-          "findingCount", "createdAt"
+          "question", "answer", "inferenceSource", "inferenceMode",
+          "evidenceHash", "findingCount", "createdAt"
         ])
         && request.resource.data.question is string
         && request.resource.data.question.size() <= 2000
         && request.resource.data.answer is string
         && request.resource.data.answer.size() <= 12000
         && request.resource.data.inferenceSource in ["ON_DEVICE", "IN_CLOUD", "UNKNOWN"]
+        && request.resource.data.inferenceMode in ["only_on_device", "prefer_on_device"]
         && request.resource.data.evidenceHash is string
         && request.resource.data.evidenceHash.size() <= 64
         && request.resource.data.findingCount is int
