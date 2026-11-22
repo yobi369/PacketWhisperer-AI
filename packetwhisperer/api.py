@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import logging
 import os
 from pathlib import Path
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from packetwhisperer import __version__
 from packetwhisperer.analyzer import FlowValidationError, analyze_flows, parse_flows
@@ -15,6 +17,21 @@ from packetwhisperer.pcap_analyzer import CaptureValidationError, MAX_CAPTURE_BY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("packetwhisperer")
 app = FastAPI(title="PacketWhisperer AI", version=__version__, description="Explainable network-flow analysis API. Findings are heuristic investigation leads, not proof of compromise.", docs_url="/docs", redoc_url="/redoc")
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "PACKETWHISPERER_CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 
 @app.middleware("http")
@@ -32,17 +49,50 @@ async def security_headers(request: Request, call_next):
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
+def _verify_firebase_id_token(token: str) -> bool:
+    """Verify a Firebase Authentication ID token when Admin credentials are configured."""
+    service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON", "")
+    if not service_account_json:
+        return False
+    try:
+        import firebase_admin
+        from firebase_admin import auth as firebase_auth, credentials
+
+        try:
+            firebase_app = firebase_admin.get_app()
+        except ValueError:
+            service_account_info = json.loads(service_account_json)
+            credential = credentials.Certificate(service_account_info)
+            options = {}
+            project_id = os.getenv("FIREBASE_PROJECT_ID") or service_account_info.get("project_id")
+            if project_id:
+                options["projectId"] = project_id
+            firebase_app = firebase_admin.initialize_app(credential, options)
+        firebase_auth.verify_id_token(token, app=firebase_app, check_revoked=True)
+        return True
+    except Exception as exc:
+        logger.warning("firebase_auth_rejected error_type=%s", type(exc).__name__)
+        return False
+
+
 def require_api_access(request: Request) -> None:
-    """Require bearer auth when configured; fail closed in production."""
+    """Accept Firebase ID tokens when configured; otherwise retain the legacy bearer gate."""
+    supplied = request.headers.get("authorization", "")
+    prefix = "Bearer "
+    token = supplied[len(prefix):] if supplied.startswith(prefix) else ""
+
+    if os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON"):
+        if not token or not _verify_firebase_id_token(token):
+            raise HTTPException(status_code=401, detail="Valid Firebase ID token required", headers={"WWW-Authenticate": "Bearer"})
+        return
+
     expected = os.getenv("PACKETWHISPERER_API_TOKEN", "")
     production = os.getenv("APP_ENV", "development").strip().lower() == "production"
     if not expected:
         if production:
             raise HTTPException(status_code=503, detail="API authentication is not configured")
         return
-    supplied = request.headers.get("authorization", "")
-    prefix = "Bearer "
-    if not supplied.startswith(prefix) or not hmac.compare_digest(supplied[len(prefix):], expected):
+    if not token or not hmac.compare_digest(token, expected):
         raise HTTPException(status_code=401, detail="Valid bearer token required", headers={"WWW-Authenticate": "Bearer"})
 
 @app.get("/", include_in_schema=False)
@@ -57,7 +107,7 @@ def health() -> dict[str, str]:
 @app.get("/ready", tags=["operations"])
 def ready() -> JSONResponse:
     production = os.getenv("APP_ENV", "development").strip().lower() == "production"
-    token_configured = bool(os.getenv("PACKETWHISPERER_API_TOKEN", ""))
+    token_configured = bool(os.getenv("PACKETWHISPERER_API_TOKEN", "") or os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON", ""))
     if production and not token_configured:
         return JSONResponse(status_code=503, content={"status": "not_ready", "reason": "API authentication is not configured"})
     return JSONResponse(content={"status": "ready"})
