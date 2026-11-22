@@ -99,14 +99,15 @@ async function askAnalyst() {
   $("ask-btn").disabled = true;
   $("ai-output").textContent = "Reviewing structured findings…";
   try {
-    const result = await explainFindings(prompt, state.report);
+    const allowCloudFallback = $("cloud-consent").checked;
+    const result = await explainFindings(prompt, state.report, allowCloudFallback);
     $("ai-output").textContent = result.answer;
     const local = result.source === "ON_DEVICE";
     $("inference-badge").textContent = local ? "ON-DEVICE INFERENCE" : result.source === "IN_CLOUD" ? "CLOUD FALLBACK" : "SOURCE UNKNOWN";
     $("inference-badge").className = "tag " + (local ? "good" : "cloud");
-    $("ai-mode").textContent = `PREFER_ON_DEVICE · ${result.source}`;
+    $("ai-mode").textContent = `${result.inferenceMode.toUpperCase()} · ${result.source}`;
   } catch (error) {
-    $("ai-output").textContent = `Hybrid analysis could not complete: ${error.message}. Check Firebase configuration, App Check, model availability and network access.`;
+    $("ai-output").textContent = `Analysis could not complete: ${error.message}. If local inference is unavailable, enable cloud fallback and retry. Check Firebase configuration, App Check and model availability.`;
   } finally {
     $("ask-btn").disabled = false;
   }
