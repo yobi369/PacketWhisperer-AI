@@ -29,7 +29,7 @@ npm install
 npm run dev
 ```
 
-Populate `.env.local` from Firebase Project settings > Your apps > Web app. Set the App Check reCAPTCHA v3 site key for production. For local development, set `VITE_APPCHECK_DEBUG=true`, open the app, copy the generated App Check debug token from the browser console, and register it in Firebase Console > App Check > Apps > Manage debug tokens.
+Populate `.env.local` from Firebase Project settings > Your apps > Web app. Set the App Check reCAPTCHA v3 site key in `.env.local`. For local development, also set `VITE_APPCHECK_DEBUG=true`; the SDK will use a debug token instead of reCAPTCHA attestation. Open the app, copy the generated App Check debug token from the browser console, and register it in Firebase Console > App Check > Apps > Manage debug tokens. Keep the token private and never commit it.
 
 The app will display configuration status and keep hybrid AI disabled until required Firebase settings are supplied.
 
