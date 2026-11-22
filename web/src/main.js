@@ -47,7 +47,7 @@ async function analyzeEvidence() {
   const form = new FormData();
   form.append("file", state.file);
   const headers = {};
-  if (status.configured) {
+  if (status.authConfigured) {
     try {
       headers.Authorization = `Bearer ${await getAnalystIdToken()}`;
     } catch (error) {
