@@ -15,7 +15,7 @@
     </header>
     <main class="layout">
       <section class="intro">
-        <div><p class="eyebrow">EVIDENCE-FIRST NETWORK INTELLIGENCE</p><h1>Investigate with <em>clarity.</em><br/>Keep sensitive evidence close.</h1><p class="lede">Deterministic network analysis meets hybrid AI. Start with verifiable signals, then ask for an explanation using on-device inference when available or a cloud fallback when needed.</p></div>
+        <div><p class="eyebrow">EVIDENCE-FIRST NETWORK INTELLIGENCE</p><h1>Investigate with <em>clarity.</em><br/>Keep sensitive evidence close.</h1><p class="lede">Deterministic network analysis meets hybrid AI. Start with verifiable signals, then request an explanation. Keep inference on-device by default; cloud fallback is opt-in.</p></div>
         <div class="architecture" aria-label="Hybrid inference architecture"><div class="node"><span>01</span><b>LOCAL</b><small>Private reasoning</small></div><div class="link-line"></div><div class="node cloud"><span>02</span><b>CLOUD</b><small>Fallback reasoning</small></div></div>
       </section>
       <section class="workspace">
@@ -43,7 +43,7 @@
           </div>
           <div class="panel analyst-panel">
             <div class="panel-title"><div><p class="eyebrow">03 / EXPLAIN</p><h2>Hybrid AI analyst</h2></div><span id="inference-badge" class="tag neutral">NOT CONNECTED</span></div>
-            <p class="muted">Ask one focused question about the loaded findings. Firebase AI Logic prefers local inference and automatically falls back to the cloud when local inference is unavailable.</p>
+            <p class="muted">Ask one focused question about the loaded findings. Firebase AI Logic runs locally by default. Cloud fallback is available only when the analyst explicitly authorizes it.</p>
             <div class="prompt-row"><textarea id="analyst-prompt" rows="3" maxlength="2000" placeholder="Example: Explain the strongest evidence for a scan-like pattern and list safe validation steps." disabled></textarea><button id="ask-btn" class="primary ask" disabled>Analyze <span>↗</span></button></div>
             <label class="cloud-consent"><input id="cloud-consent" type="checkbox"/><span><b>Allow cloud fallback for this investigation</b><small>If enabled, the minimized findings summary may be sent to Google's cloud model when local inference is unavailable. Without consent, use on-device only.</small></span></label>
             <div class="ai-meta"><span id="ai-mode">PREFER_ON_DEVICE</span><span>Single-turn evidence-grounded analysis</span></div>
