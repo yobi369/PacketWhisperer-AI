@@ -33,6 +33,18 @@ Populate `.env.local` from Firebase Project settings > Your apps > Web app. Set 
 
 The app will display configuration status and keep hybrid AI disabled until required Firebase settings are supplied.
 
+## Reproducible demo
+
+The web client serves [demo-flows.csv](public/demo-flows.csv), a synthetic 21-row dataset using documentation-only IP ranges. Upload it to demonstrate the deterministic high-destination-fan-out and destination-port-diversity findings. It is synthetic test data, not a malicious capture or evidence of a real incident.
+
+Suggested walkthrough:
+1. Download or select the synthetic CSV and connect the FastAPI API.
+2. Run deterministic analysis and inspect the evidence SHA-256 and rule findings.
+3. Ask the analyst to explain why the observations are scan-like without asserting compromise.
+4. Keep cloud fallback unchecked to demonstrate the on-device-only path on supported Chrome hardware.
+5. Enable cloud fallback with explicit consent and demonstrate the SDK-reported inference source when local inference is unavailable.
+6. Show that investigation metadata is saved under the authenticated user's Firestore path.
+
 ## Firestore rules
 
 Deploy the repository's `firestore.rules` file. It restricts each anonymous or authenticated user to their own investigation metadata.
