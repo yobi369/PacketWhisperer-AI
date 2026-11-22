@@ -1,5 +1,5 @@
 import "./style.css";
-import { firebaseStatus, explainFindings } from "./firebase.js";
+import { firebaseStatus, explainFindings, getAnalystIdToken } from "./firebase.js";
 
 const $ = (id) => document.getElementById(id);
 const state = { report: null, file: null };
@@ -46,7 +46,17 @@ async function analyzeEvidence() {
   const endpoint = isPcap ? "/v1/analyze/pcap" : "/v1/analyze/flows";
   const form = new FormData();
   form.append("file", state.file);
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = {};
+  if (status.configured) {
+    try {
+      headers.Authorization = `Bearer ${await getAnalystIdToken()}`;
+    } catch (error) {
+      setMessage(`Firebase sign-in failed: ${error.message}`, true);
+      return;
+    }
+  } else if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   $("analyze-btn").disabled = true;
   setMessage("Analyzing evidence…");
   try {
