@@ -69,7 +69,7 @@ The benchmark reports per-rule precision/recall on three generated sanity scenar
 
 ## Hybrid SOC web client
 
-The competition web client lives in [web/](web/README.md). It uses Firebase AI Logic hybrid inference with `PREFER_ON_DEVICE`, displays the SDK-reported inference source, and sends only a minimized structured findings summary to the model. The original deterministic FastAPI analysis engine remains the source of network evidence.
+The competition web client lives in [web/](web/README.md). It uses Firebase AI Logic hybrid inference, displays the SDK-reported inference source, and sends only a minimized structured findings summary to the model. On-device-only inference is the default; cloud fallback requires explicit analyst consent and selects `PREFER_ON_DEVICE`. The original deterministic FastAPI analysis engine remains the source of network evidence.
 
 Run the web client with:
 
