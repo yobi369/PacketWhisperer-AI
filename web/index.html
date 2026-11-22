@@ -25,7 +25,7 @@
           <label class="field-label" for="api-url">Analysis API endpoint</label><input id="api-url" type="url" placeholder="https://your-api.example.com" autocomplete="url"/>
           <label class="field-label" for="api-token">Legacy API bearer token <span class="optional">LOCAL TESTING ONLY</span></label><input id="api-token" type="password" placeholder="Provided by your API operator" autocomplete="off"/>
           <label class="field-label" for="evidence-file">Network evidence</label>
-          <div class="dropzone"><div class="upload-icon">↥</div><b>Choose a traffic file</b><p>CSV flow records or offline PCAP / PCAPNG</p><input id="evidence-file" type="file" accept=".csv,.pcap,.pcapng,.cap,text/csv,application/octet-stream"/></div>
+          <div class="dropzone"><div class="upload-icon">↥</div><b>Choose a traffic file</b><p>CSV flow records or offline PCAP / PCAPNG</p><input id="evidence-file" type="file" accept=".csv,.pcap,.pcapng,.cap,text/csv,application/octet-stream"/><a class="sample-link" href="/demo-flows.csv" download>Download synthetic demo CSV ↗</a></div>
           <button id="analyze-btn" class="primary" disabled>Analyze evidence <span>→</span></button>
           <p id="ingest-message" class="notice" role="status">Connect an analysis API and choose a file to begin.</p>
           <div class="privacy-note"><span>◇</span><p><b>Evidence boundary</b><br/>Raw capture bytes are sent only to the analysis API you configure. AI receives a minimized findings summary, not the raw capture.</p></div>
