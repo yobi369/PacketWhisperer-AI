@@ -89,7 +89,7 @@ function renderReport(report, fileSize) {
   $("findings-count").textContent = `${report.findings?.length || 0} records`;
   $("findings-list").innerHTML = (report.findings || []).map((finding) => {
     const severity = String(finding.severity || "info").toLowerCase();
-    return `<article class="finding"><div class="finding-top"><div><b>${safeText(finding.title || finding.rule_id || finding.rule || "Finding")}</b><small>${safeText(finding.rule_id || finding.rule || "RULE UNSPECIFIED")}</small></div><span class="severity ${safeText(severity)}">${safeText(severity)}</span></div><p>${safeText(finding.description || finding.summary || "No description supplied.")}</p></article>`;
+    return `<article class="finding"><div class="finding-top"><div><b>${safeText(finding.title || finding.rule_id || finding.rule || "Finding")}</b><small>${safeText(finding.rule_id || finding.rule || "RULE UNSPECIFIED")}</small></div><span class="severity ${safeText(severity)}">${safeText(severity)}</span></div><p>${safeText(finding.interpretation || finding.description || finding.summary || "No description supplied.")}</p></article>`;
   }).join("") || '<div class="empty-state compact">No findings were returned by the deterministic analysis engine.</div>';
 }
 
