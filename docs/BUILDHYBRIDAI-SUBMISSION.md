@@ -155,8 +155,8 @@ Show the evidence-minimization boundary, explain the consent control, and point 
 
 ## Public links
 
-- Repository: https://github.com/yobi369/PacketWhisperer-AI
-- Hackathon branch: https://github.com/yobi369/PacketWhisperer-AI/tree/hackathon/buildhybridai-web
+- Source repository for judging (includes the full hackathon implementation): https://github.com/yobi369/PacketWhisperer-AI/tree/hackathon/buildhybridai-web
+- Repository home and default-branch MIT license: https://github.com/yobi369/PacketWhisperer-AI
 - Hosted Preview alias (SSO-protected; use the time-limited share URL for judges): https://packetwhisper-git-hackathon-bui-7b6d58-brians-projects-a132bca2.vercel.app
 - Analysis API: https://packetwhisperer-ai.onrender.com
 - YouTube demo: add after recording.
