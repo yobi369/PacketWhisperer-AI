@@ -10,7 +10,7 @@ $("inference-badge").textContent = status.configured ? "HYBRID READY" : "NOT CON
 $("inference-badge").className = "tag " + (status.configured ? "good" : "neutral");
 
 const apiUrl = $("api-url");
-apiUrl.value = localStorage.getItem("pw_api_url") || "";
+apiUrl.value = localStorage.getItem("pw_api_url") || "https://packetwhisperer-ai.onrender.com";
 apiUrl.addEventListener("change", () => localStorage.setItem("pw_api_url", apiUrl.value.trim()));
 
 $("evidence-file").addEventListener("change", (event) => {
@@ -23,6 +23,7 @@ apiUrl.addEventListener("input", () => {
 });
 
 $("analyze-btn").addEventListener("click", analyzeEvidence);
+$("demo-btn").addEventListener("click", loadSyntheticDemo);
 $("ask-btn").addEventListener("click", askAnalyst);
 
 function formatBytes(bytes) {
@@ -36,6 +37,30 @@ function safeText(value) {
 function setMessage(message, isError = false) {
   $("ingest-message").textContent = message;
   $("ingest-message").className = "notice " + (isError ? "error" : "");
+}
+
+async function loadSyntheticDemo() {
+  const base = apiUrl.value.trim().replace(/\\/$/, "");
+  if (!base) {
+    setMessage("Enter the PacketWhisperer API endpoint first.", true);
+    return;
+  }
+  $("demo-btn").disabled = true;
+  setMessage("Loading the fixed synthetic demo…");
+  try {
+    const response = await fetch(base + "/v1/demo/flows");
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail || `Demo endpoint returned ${response.status}`);
+    state.report = body;
+    renderReport(body, body.evidence?.bytes_received ?? 0);
+    $("analyst-prompt").disabled = !status.configured || !(body.findings?.length);
+    $("ask-btn").disabled = !status.configured || !(body.findings?.length);
+    setMessage("Synthetic demo loaded. No upload or API bearer token was required.");
+  } catch (error) {
+    setMessage(error.message || "Unable to load the synthetic demo.", true);
+  } finally {
+    $("demo-btn").disabled = false;
+  }
 }
 
 async function analyzeEvidence() {
