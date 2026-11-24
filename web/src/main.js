@@ -96,10 +96,18 @@ function renderReport(report, fileSize) {
 async function askAnalyst() {
   const prompt = $("analyst-prompt").value.trim();
   if (!prompt || !state.report) return;
+
+  const allowCloudFallback = $("cloud-consent").checked;
+  const requestedMode = allowCloudFallback ? "PREFER_ON_DEVICE" : "ONLY_ON_DEVICE";
+
+  // Clear provenance from any previous request. A failed request has no inference source.
+  $("inference-badge").textContent = "INFERENCE IN PROGRESS";
+  $("inference-badge").className = "tag neutral";
+  $("ai-mode").textContent = `${requestedMode} · PENDING`;
   $("ask-btn").disabled = true;
   $("ai-output").textContent = "Reviewing structured findings…";
+
   try {
-    const allowCloudFallback = $("cloud-consent").checked;
     const result = await explainFindings(prompt, state.report, allowCloudFallback);
     $("ai-output").textContent = result.answer;
     const source = String(result.source || "UNKNOWN").toUpperCase();
@@ -108,7 +116,11 @@ async function askAnalyst() {
     $("inference-badge").className = "tag " + (local ? "good" : "cloud");
     $("ai-mode").textContent = `${result.inferenceMode.toUpperCase()} · ${source}`;
   } catch (error) {
-    $("ai-output").textContent = `Analysis could not complete: ${error.message}. If local inference is unavailable, enable cloud fallback and retry. Check Firebase configuration, App Check and model availability.`;
+    // Never leave a prior successful inference source displayed after a failed request.
+    $("inference-badge").textContent = "NO INFERENCE RESULT";
+    $("inference-badge").className = "tag neutral";
+    $("ai-mode").textContent = `${requestedMode} · FAILED`;
+    $("ai-output").textContent = `Analysis could not complete: ${error.message}. No inference source was returned for this request.`;
   } finally {
     $("ask-btn").disabled = false;
   }
