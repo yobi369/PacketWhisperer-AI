@@ -40,7 +40,7 @@ function setMessage(message, isError = false) {
 }
 
 async function loadSyntheticDemo() {
-  const base = apiUrl.value.trim().replace(/\\/$/, "");
+  const base = apiUrl.value.trim().replace(/\/$/, "");
   if (!base) {
     setMessage("Enter the PacketWhisperer API endpoint first.", true);
     return;
