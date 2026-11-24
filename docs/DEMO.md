@@ -9,7 +9,7 @@ This walkthrough is designed for the hosted #BuildHybridAI 2026 web client. The 
 - Repository: https://github.com/yobi369/PacketWhisperer-AI/tree/hackathon/buildhybridai-web
 - Sample file: use **Download synthetic demo CSV** in the Evidence intake panel.
 
-The hosted analysis API currently requires the operator-issued bearer token. Enter it in the password field in the app; do not publish it in this document, source control, screenshots, or the public demo video.
+The hosted API includes a fixed, read-only synthetic demo endpoint that does not require a bearer token. The API bearer token is required only when uploading custom CSV/PCAP evidence. Never publish the token in this document, source control, screenshots, or the public demo video.
 
 ## Three-minute presentation flow
 
@@ -19,11 +19,10 @@ Introduce PacketWhisperer as an evidence-first network investigation assistant. 
 
 ### 0:30–1:15 — Run deterministic analysis
 
-1. Open the hosted web client.
-2. Enter the analysis API endpoint and operator-issued bearer token.
-3. Download and select the synthetic demo CSV.
-4. Click **Analyze evidence**.
-5. Point out the record count, deterministic findings, and SHA-256 evidence fingerprint.
+1. Open the hosted web client. The Render API endpoint is prefilled.
+2. Click **Load safe synthetic demo**. This requests a fixed 21-row fixture from the public read-only demo endpoint; no upload or bearer token is needed.
+3. Point out the record count, deterministic findings, and SHA-256 evidence fingerprint.
+4. For custom authorized uploads, enter the operator-issued bearer token and select a CSV or offline PCAP/PCAPNG file.
 
 The 21-row fixture is designed to trigger destination fan-out and destination-port-diversity signals. Explain that these are heuristics, not proof of scanning or compromise.
 
