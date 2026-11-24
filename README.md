@@ -80,7 +80,7 @@ npm install
 npm run dev
 ```
 
-For production API access, configure `PACKETWHISPERER_CORS_ORIGINS` with the exact deployed web origin. Configure Firebase Admin verification on the API using `FIREBASE_SERVICE_ACCOUNT_JSON` (a JSON service-account credential stored as a server-side secret) and `FIREBASE_PROJECT_ID`. When Firebase Admin credentials are configured, analysis endpoints accept verified Firebase Authentication ID tokens instead of the shared bearer token. Never expose service-account credentials or shared production bearer tokens in browser code.
+For hosted API access, configure `PACKETWHISPERER_CORS_ORIGINS` with the exact deployed web origin and set `PACKETWHISPERER_API_TOKEN` as a server-side secret. The current web client sends this operator-issued bearer token to the FastAPI analysis endpoints. Keep it private; never commit it, place it in a `VITE_*` variable, or include it in a public recording. Firebase anonymous authentication currently scopes analyst metadata saved in Firestore; the current FastAPI backend does not verify Firebase ID tokens. A future multi-user deployment needs a verified identity integration and per-user authorization.
 
 See [web/README.md](web/README.md) for Firebase setup, App Check, Firestore rules, API authentication and hybrid inference limitations.
 
