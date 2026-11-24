@@ -12,6 +12,7 @@ The competition web client is deployed from `web/` through Vercel and connects t
 - Build command: `npm run build`
 - Output directory: `dist`
 - Preview URL: https://packetwhisper-git-hackathon-bui-7b6d58-brians-projects-a132bca2.vercel.app
+- Preview deployments are protected by Vercel SSO. Use the time-limited share URL supplied separately for judging; the raw alias may require a Vercel team login.
 - Analysis API: https://packetwhisperer-ai.onrender.com
 - Firebase project: `packetwhisper-hybrid-soc`
 
