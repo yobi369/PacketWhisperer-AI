@@ -106,7 +106,7 @@ async function analyzeEvidence() {
 function renderReport(report, fileSize) {
   $("empty-state").classList.add("hidden");
   $("report-view").classList.remove("hidden");
-  $("evidence-state").textContent = "ANALYSIS COMPLETE";
+  $("evidence-state").textContent = report.evidence?.synthetic ? "SYNTHETIC DEMO" : "ANALYSIS COMPLETE";
   $("evidence-state").className = "tag good";
   $("metric-records").textContent = report.flow_count ?? report.capture?.packets_analyzed ?? "—";
   $("metric-findings").textContent = report.findings_count ?? report.findings?.length ?? 0;
