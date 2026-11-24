@@ -33,7 +33,7 @@ Complete these steps in the same Firebase project before expecting hybrid infere
 7. For local development, use the App Check debug token flow described below and register the generated token under the app's Manage debug tokens panel. Debug tokens are private and must never be shipped in production.
 8. Deploy `firestore.rules` from this repository before testing investigation persistence.
 
-App Check enforcement and Firebase AI Logic project enablement are Firebase Console settings; initializing the SDK in source code does not automatically enable them. Keep enforcement disabled until the updated client has been tested and App Check metrics show valid traffic.
+App Check enforcement and Firebase AI Logic project enablement are Firebase Console settings; initializing the SDK in source code does not automatically enable them. Check the current enforcement state and request metrics when diagnosing rejected calls. Do not weaken enforcement or change billing as a speculative workaround.
 
 ## Local setup
 
@@ -54,13 +54,16 @@ The app will display configuration status and keep hybrid AI disabled until requ
 
 The web client serves [demo-flows.csv](public/demo-flows.csv), a synthetic 21-row dataset using documentation-only IP ranges. Upload it to demonstrate the deterministic high-destination-fan-out and destination-port-diversity findings. It is synthetic test data, not a malicious capture or evidence of a real incident.
 
-Suggested walkthrough:
-1. Download or select the synthetic CSV and connect the FastAPI API.
-2. Run deterministic analysis and inspect the evidence SHA-256 and rule findings.
-3. Ask the analyst to explain why the observations are scan-like without asserting compromise.
-4. Keep cloud fallback unchecked to demonstrate the on-device-only path on supported Chrome hardware.
-5. Enable cloud fallback with explicit consent and demonstrate the SDK-reported inference source when local inference is unavailable.
-6. Show that investigation metadata is saved under the authenticated user's Firestore path.
+Hosted walkthrough:
+1. Open the Vercel Preview URL listed in `docs/BUILDHYBRIDAI-DEPLOYMENT.md`.
+2. Enter the Render analysis API endpoint and the operator-issued API bearer token.
+3. Download the synthetic CSV from the page, upload it, and run deterministic analysis.
+4. Inspect the record count, rule findings, and SHA-256 evidence fingerprint.
+5. Ask: "Explain the strongest evidence for a scan-like pattern. Separate observed facts from hypotheses, state what information is missing, and list safe validation steps."
+6. On a supported device, keep cloud fallback unchecked and verify the SDK reports `ON_DEVICE`. If local inference is unavailable, enable cloud fallback explicitly and show the actual source reported by the SDK.
+7. Explain that Firebase stores analyst metadata under the anonymous user's Firestore path.
+
+The hosted Render API currently requires an operator-issued bearer token. Do not publish it or include it in the demo recording. The API token is a single-operator access gate, not multi-user authorization.
 
 ## Firestore rules
 
@@ -84,15 +87,9 @@ Enter `http://127.0.0.1:8000` as the analysis API endpoint in the web app. Confi
 export PACKETWHISPERER_CORS_ORIGINS="http://localhost:5173,https://your-deployed-web-origin"
 ```
 
-For a deployed app, configure Firebase Admin verification on the API using server-side secrets (never Vite variables):
+For the current hosted deployment, the Render API uses the server-side `PACKETWHISPERER_API_TOKEN` gate. The operator enters that token in the web client's password field; it is held in page memory and is not stored in local storage. Keep the token private and do not include it in public recordings or source control.
 
-```bash
-export APP_ENV=production
-export FIREBASE_PROJECT_ID="your-firebase-project-id"
-export FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account", "...":"..."}'
-```
-
-The service-account JSON must be stored as a secret in the backend hosting provider. With this setting, the web client signs in anonymously through Firebase Authentication and sends its short-lived Firebase ID token to the API; the backend verifies it using Firebase Admin. If Firebase Admin credentials are not configured, the legacy `PACKETWHISPERER_API_TOKEN` bearer gate remains available for local/single-operator testing only. Do not put a shared production bearer token in a public browser app.
+Firebase anonymous authentication is used to scope investigation metadata saved in Firestore. The current FastAPI backend does **not** verify Firebase Authentication ID tokens; do not treat Firebase sign-in as API authorization. A future multi-user deployment needs Firebase Admin token verification or another managed identity gateway, plus per-user authorization and rate limiting.
 
 ## Hybrid inference behavior
 
