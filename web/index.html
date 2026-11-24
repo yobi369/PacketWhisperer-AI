@@ -49,7 +49,7 @@
             <div class="prompt-row"><textarea id="analyst-prompt" rows="3" maxlength="2000" placeholder="Example: Explain the strongest evidence for a scan-like pattern and list safe validation steps." disabled></textarea><button id="ask-btn" class="primary ask" disabled>Analyze <span>↗</span></button></div>
             <label class="cloud-consent"><input id="cloud-consent" type="checkbox"/><span><b>Allow cloud fallback for this investigation</b><small>If enabled, the minimized findings summary may be sent to Google's cloud model when local inference is unavailable. Without consent, use on-device only.</small></span></label>
             <div class="ai-meta"><span id="ai-mode">ONLY_ON_DEVICE · CLOUD FALLBACK OPT-IN</span><span>Single-turn evidence-grounded analysis</span></div>
-            <div id="ai-output" class="ai-output"><span class="muted">The analyst will explain findings without treating heuristics as proof of compromise.</span></div>
+            <div id="ai-output" class="ai-output" aria-live="polite"><span class="muted">The analyst will explain findings without treating heuristics as proof of compromise.</span></div>
           </div>
         </section>
       </section>
