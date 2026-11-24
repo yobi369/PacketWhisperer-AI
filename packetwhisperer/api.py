@@ -39,6 +39,17 @@ async def security_headers(request: Request, call_next):
     return response
 
 
+# Fixed, non-sensitive 21-row fixture for an unauthenticated read-only product demo.
+# This endpoint never accepts user uploads; it only analyzes this bounded synthetic dataset.
+DEMO_FLOW_CSV = (
+    "src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n"
+    + "".join(
+        f"10.0.0.5,192.0.2.{index},51000,{1000 + index},TCP,2048,5,0.25\\n"
+        for index in range(1, 22)
+    )
+).encode("utf-8")
+
+
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
@@ -71,6 +82,21 @@ def ready() -> JSONResponse:
     if production and not token_configured:
         return JSONResponse(status_code=503, content={"status": "not_ready", "reason": "API authentication is not configured"})
     return JSONResponse(content={"status": "ready"})
+
+@app.get("/v1/demo/flows", tags=["demo"])
+def demo_flows() -> JSONResponse:
+    """Return deterministic analysis of a fixed synthetic fixture; accepts no uploads."""
+    flows = parse_flows(DEMO_FLOW_CSV)
+    report = analyze_flows(flows)
+    report["evidence"] = {
+        "sha256": hashlib.sha256(DEMO_FLOW_CSV).hexdigest(),
+        "filename": "demo-flows.csv",
+        "bytes_received": len(DEMO_FLOW_CSV),
+        "format": "network-flow-csv",
+        "synthetic": True,
+    }
+    return JSONResponse(content=report)
+
 
 @app.post("/v1/analyze/flows", tags=["analysis"], dependencies=[Depends(require_api_access)])
 async def analyze_upload(file: UploadFile = File(...)) -> JSONResponse:
