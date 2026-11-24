@@ -5,6 +5,7 @@ This walkthrough is designed for the hosted #BuildHybridAI 2026 web client. The 
 ## Hosted application
 
 - Web client: https://packetwhisper-git-hackathon-bui-7b6d58-brians-projects-a132bca2.vercel.app
+- Judge access: use the time-limited Vercel share URL supplied separately; the raw Preview alias is SSO-protected.
 - Analysis API: https://packetwhisperer-ai.onrender.com
 - Repository: https://github.com/yobi369/PacketWhisperer-AI/tree/hackathon/buildhybridai-web
 - Sample file: use **Download synthetic demo CSV** in the Evidence intake panel.
