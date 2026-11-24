@@ -53,4 +53,4 @@ The hackathon branch contains an optional Firebase Admin verification hook, but 
 
 ## Known deployment limitations
 
-The hosted API currently relies on one operator-issued bearer token. It is not a public multi-user service and should not receive customer or production network captures. Firebase anonymous authentication scopes saved analyst metadata in Firestore; it does not, by itself, authenticate requests to the Render analysis API.
+The public synthetic demo route is read-only and accepts no user uploads. Custom upload routes still rely on one operator-issued bearer token; they are not a public multi-user service and should not receive customer or production network captures. Firebase anonymous authentication scopes saved analyst metadata in Firestore; it does not, by itself, authenticate requests to the Render analysis API.
