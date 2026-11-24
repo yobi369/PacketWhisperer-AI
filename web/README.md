@@ -88,7 +88,7 @@ export PACKETWHISPERER_CORS_ORIGINS="http://localhost:5173,https://your-deployed
 
 For the current hosted deployment, the Render API uses the server-side `PACKETWHISPERER_API_TOKEN` gate. The operator enters that token in the web client's password field; it is held in page memory and is not stored in local storage. Keep the token private and do not include it in public recordings or source control.
 
-Firebase anonymous authentication is used to scope investigation metadata saved in Firestore. The current FastAPI backend does **not** verify Firebase Authentication ID tokens; do not treat Firebase sign-in as API authorization. A future multi-user deployment needs Firebase Admin token verification or another managed identity gateway, plus per-user authorization and rate limiting.
+Firebase anonymous authentication is used to scope investigation metadata saved in Firestore. The hackathon branch contains an optional Firebase Admin verification hook, but the Render service currently deployed from `main` uses the bearer-token gate; do not assume the deployed API accepts Firebase Authentication ID tokens. Do not treat Firebase sign-in alone as API authorization. A future multi-user deployment needs the verified identity path enabled and tested, plus per-user authorization and rate limiting.
 
 ## Hybrid inference behavior
 
