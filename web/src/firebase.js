@@ -4,6 +4,33 @@ import { getAI, GoogleAIBackend, getGenerativeModel, InferenceMode } from "fireb
 import { getAuth, signInAnonymously } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
+// Compatibility fallback for browsers that do not yet implement AbortSignal.any.
+// Firebase AI Logic may use this when composing request cancellation signals.
+if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any !== "function") {
+  Object.defineProperty(AbortSignal, "any", {
+    configurable: true,
+    writable: true,
+    value(signals) {
+      const controller = new AbortController();
+      const cleanups = [];
+      const abortFrom = (signal) => {
+        if (!controller.signal.aborted) controller.abort(signal.reason);
+        for (const cleanup of cleanups) cleanup();
+      };
+      for (const signal of signals) {
+        if (signal.aborted) {
+          abortFrom(signal);
+          break;
+        }
+        const listener = () => abortFrom(signal);
+        signal.addEventListener("abort", listener, { once: true });
+        cleanups.push(() => signal.removeEventListener("abort", listener));
+      }
+      return controller.signal;
+    },
+  });
+}
+
 const env = import.meta.env;
 const required = ["VITE_FIREBASE_API_KEY", "VITE_FIREBASE_PROJECT_ID", "VITE_FIREBASE_APP_ID"];
 const missing = required.filter((key) => !env[key]);
