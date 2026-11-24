@@ -21,10 +21,12 @@
       <section class="workspace">
         <aside class="panel ingest">
           <div class="panel-title"><div><p class="eyebrow">01 / INGEST</p><h2>Evidence intake</h2></div><span class="tag">BOUNDED</span></div>
-          <p class="muted">Analyze traffic you own or are explicitly authorized to inspect. Evidence is processed by your configured PacketWhisperer API.</p>
+          <p class="muted">Try the fixed synthetic demo without an API token, or upload traffic you own or are authorized to inspect using your operator-issued token.</p>
           <label class="field-label" for="api-url">Analysis API endpoint</label><input id="api-url" type="url" placeholder="https://your-api.example.com" autocomplete="url"/>
-          <label class="field-label" for="api-token">API bearer token <span class="optional">required for hosted analysis</span></label><input id="api-token" type="password" placeholder="Provided by your API operator" autocomplete="off"/>
-          <label class="field-label" for="evidence-file">Network evidence</label>
+          <label class="field-label" for="api-token">API bearer token <span class="optional">required for uploaded files only</span></label><input id="api-token" type="password" placeholder="Provided by your API operator" autocomplete="off"/>
+          <button id="demo-btn" class="primary" type="button">Load safe synthetic demo <span>→</span></button>
+          <p class="muted">The built-in demo is fixed, read-only synthetic data and does not require a bearer token.</p>
+          <label class="field-label" for="evidence-file">Or upload network evidence</label>
           <div class="dropzone"><div class="upload-icon">↥</div><b>Choose a traffic file</b><p>CSV flow records or offline PCAP / PCAPNG</p><input id="evidence-file" type="file" accept=".csv,.pcap,.pcapng,.cap,text/csv,application/octet-stream"/><a class="sample-link" href="/demo-flows.csv" download>Download synthetic demo CSV ↗</a></div>
           <button id="analyze-btn" class="primary" disabled>Analyze evidence <span>→</span></button>
           <p id="ingest-message" class="notice" role="status">Connect an analysis API and choose a file to begin.</p>
