@@ -53,6 +53,9 @@ async function loadSyntheticDemo() {
     if (!response.ok) throw new Error(body.detail || `Demo endpoint returned ${response.status}`);
     state.report = body;
     renderReport(body, body.evidence?.bytes_received ?? 0);
+    if (!$("analyst-prompt").value.trim()) {
+      $("analyst-prompt").value = "Explain the strongest evidence for a scan-like pattern. Separate observed facts from hypotheses, state what information is missing, and list safe validation steps.";
+    }
     $("analyst-prompt").disabled = !status.configured || !(body.findings?.length);
     $("ask-btn").disabled = !status.configured || !(body.findings?.length);
     setMessage("Synthetic demo loaded. No upload or API bearer token was required.");
