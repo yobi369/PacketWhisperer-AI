@@ -136,7 +136,10 @@ async function askAnalyst() {
   $("ai-output").textContent = "Reviewing structured findings…";
 
   try {
-    const result = await explainFindings(prompt, state.report, allowCloudFallback);
+    const result = await explainFindings(prompt, state.report, allowCloudFallback, (progress) => {
+      const percentage = Math.round(progress * 100);
+      $("ai-output").textContent = `Preparing on-device model… ${percentage}%`;
+    });
     $("ai-output").textContent = result.answer;
     const source = String(result.source || "UNKNOWN").toUpperCase();
     const local = source === "ON_DEVICE";
