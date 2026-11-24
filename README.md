@@ -81,7 +81,7 @@ npm install
 npm run dev
 ```
 
-For hosted API access, configure `PACKETWHISPERER_CORS_ORIGINS` with the exact deployed web origin and set `PACKETWHISPERER_API_TOKEN` as a server-side secret. The current web client sends this operator-issued bearer token to the FastAPI analysis endpoints. Keep it private; never commit it, place it in a `VITE_*` variable, or include it in a public recording. Firebase anonymous authentication currently scopes analyst metadata saved in Firestore; the current FastAPI backend does not verify Firebase ID tokens. A future multi-user deployment needs a verified identity integration and per-user authorization.
+For hosted API access, configure `PACKETWHISPERER_CORS_ORIGINS` with the exact deployed web origin and set `PACKETWHISPERER_API_TOKEN` as a server-side secret. The current web client sends this operator-issued bearer token to the FastAPI analysis endpoints. Keep it private; never commit it, place it in a `VITE_*` variable, or include it in a public recording. Firebase anonymous authentication currently scopes analyst metadata saved in Firestore. The hackathon branch contains an optional Firebase Admin verification hook, but the Render service currently deployed from `main` uses the bearer-token gate; do not assume the deployed API accepts Firebase ID tokens. A future multi-user deployment needs that verified identity path enabled and tested, plus per-user authorization.
 
 See [web/README.md](web/README.md) for Firebase setup, App Check, Firestore rules, API authentication and hybrid inference limitations.
 
