@@ -47,15 +47,15 @@ async function analyzeEvidence() {
   const form = new FormData();
   form.append("file", state.file);
   const headers = {};
-  if (status.authConfigured) {
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else if (status.authConfigured) {
     try {
       headers.Authorization = `Bearer ${await getAnalystIdToken()}`;
     } catch (error) {
       setMessage(`Firebase sign-in failed: ${error.message}`, true);
       return;
     }
-  } else if (token) {
-    headers.Authorization = `Bearer ${token}`;
   }
   $("analyze-btn").disabled = true;
   setMessage("Analyzing evidence…");
