@@ -55,15 +55,14 @@ The app will display configuration status and keep hybrid AI disabled until requ
 The web client serves [demo-flows.csv](public/demo-flows.csv), a synthetic 21-row dataset using documentation-only IP ranges. Upload it to demonstrate the deterministic high-destination-fan-out and destination-port-diversity findings. It is synthetic test data, not a malicious capture or evidence of a real incident.
 
 Hosted walkthrough:
-1. Open the Vercel Preview URL listed in `docs/BUILDHYBRIDAI-DEPLOYMENT.md`.
-2. Enter the Render analysis API endpoint and the operator-issued API bearer token.
-3. Download the synthetic CSV from the page, upload it, and run deterministic analysis.
-4. Inspect the record count, rule findings, and SHA-256 evidence fingerprint.
-5. Ask: "Explain the strongest evidence for a scan-like pattern. Separate observed facts from hypotheses, state what information is missing, and list safe validation steps."
-6. On a supported device, keep cloud fallback unchecked and verify the SDK reports `ON_DEVICE`. If local inference is unavailable, enable cloud fallback explicitly and show the actual source reported by the SDK.
-7. Explain that Firebase stores analyst metadata under the anonymous user's Firestore path.
+1. Open the Vercel Preview URL listed in `docs/BUILDHYBRIDAI-DEPLOYMENT.md`; the Render API endpoint is prefilled.
+2. Click **Load safe synthetic demo**. This calls the fixed public `GET /v1/demo/flows` endpoint; it accepts no uploads and does not require a bearer token.
+3. Inspect the 21 records, deterministic findings, and SHA-256 evidence fingerprint.
+4. Ask: "Explain the strongest evidence for a scan-like pattern. Separate observed facts from hypotheses, state what information is missing, and list safe validation steps."
+5. On a supported device, keep cloud fallback unchecked and verify the SDK reports `ON_DEVICE`. If local inference is unavailable, enable cloud fallback explicitly and show the actual source reported by the SDK.
+6. Explain that Firebase stores analyst metadata under the anonymous user's Firestore path.
 
-The hosted Render API currently requires an operator-issued bearer token. Do not publish it or include it in the demo recording. The API token is a single-operator access gate, not multi-user authorization.
+For custom uploads, the hosted Render API still requires an operator-issued bearer token. Do not publish it or include it in the demo recording. The token is a single-operator access gate, not multi-user authorization.
 
 ## Firestore rules
 
