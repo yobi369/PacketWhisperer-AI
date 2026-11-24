@@ -21,7 +21,7 @@ The Preview deployment is the hackathon test target. Do not promote it to Produc
 
 Firebase web configuration and the reCAPTCHA Enterprise site key are supplied as Vercel Preview environment variables. These are browser-side configuration values; they are not service-account credentials.
 
-The hosted Render API currently uses a server-side `PACKETWHISPERER_API_TOKEN` and CORS allowlisting. The operator enters the bearer token into the app's password field when using the hosted demo. Never commit the token, put it in a `VITE_*` variable, include it in screenshots/video, or distribute it publicly. This shared token is a single-operator gate, not per-user authorization.
+The hosted Render API exposes a fixed, read-only `GET /v1/demo/flows` route that returns analysis of a built-in 21-row synthetic fixture. It accepts no upload and requires no bearer token, allowing judges to try the core demonstration. Custom CSV/PCAP upload routes remain protected by the server-side `PACKETWHISPERER_API_TOKEN`; the operator enters that token into the app's password field. Never commit the token, put it in a `VITE_*` variable, include it in screenshots/video, or distribute it publicly. This shared token is a single-operator gate, not per-user authorization.
 
 Do not claim Firebase Authentication ID tokens are accepted by the current API unless Firebase Admin token verification has actually been implemented and deployed on that backend.
 
