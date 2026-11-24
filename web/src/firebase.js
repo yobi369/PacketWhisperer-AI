@@ -89,7 +89,7 @@ export async function getAnalystIdToken() {
   return user.getIdToken();
 }
 
-export async function explainFindings(prompt, report, allowCloudFallback = false) {
+export async function explainFindings(prompt, report, allowCloudFallback = false, onModelProgress) {
   if (!ai) throw new Error("Firebase AI Logic is not configured.");
   await ensureAnalystSession();
 
@@ -131,7 +131,9 @@ export async function explainFindings(prompt, report, allowCloudFallback = false
   // Initialize Gemini Nano after the analyst's button click and before inference.
   // This is required by Firebase AI Logic's web hybrid-inference flow.
   try {
-    await model.initializeDeviceModel();
+    await model.initializeDeviceModel((progress) => {
+      if (typeof onModelProgress === "function") onModelProgress(progress);
+    });
   } catch (error) {
     if (!allowCloudFallback) {
       throw new Error("On-device Gemini Nano is unavailable in this browser or device. Use desktop Chrome 139+ with the Prompt API enabled, or explicitly enable cloud fallback.");
