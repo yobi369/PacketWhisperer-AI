@@ -23,7 +23,7 @@ Firebase web configuration and the reCAPTCHA Enterprise site key are supplied as
 
 The hosted Render API exposes a fixed, read-only `GET /v1/demo/flows` route that returns analysis of a built-in 21-row synthetic fixture. It accepts no upload and requires no bearer token, allowing judges to try the core demonstration. Custom CSV/PCAP upload routes remain protected by the server-side `PACKETWHISPERER_API_TOKEN`; the operator enters that token into the app's password field. Never commit the token, put it in a `VITE_*` variable, include it in screenshots/video, or distribute it publicly. This shared token is a single-operator gate, not per-user authorization.
 
-Do not claim Firebase Authentication ID tokens are accepted by the current API unless Firebase Admin token verification has actually been implemented and deployed on that backend.
+The hackathon branch contains an optional Firebase Admin verification hook, but the Render service currently deployed from `main` does not have that path enabled. Do not claim Firebase Authentication ID tokens are accepted by the deployed API until the verification code and its server-side credentials are deployed and tested.
 
 ## Hybrid inference behavior
 
