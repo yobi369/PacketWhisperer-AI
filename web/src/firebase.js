@@ -128,8 +128,25 @@ export async function explainFindings(prompt, report, allowCloudFallback = false
     prompt,
   ].join("\n\n");
 
+  // Initialize Gemini Nano after the analyst's button click and before inference.
+  // This is required by Firebase AI Logic's web hybrid-inference flow.
+  try {
+    await model.initializeDeviceModel();
+  } catch (error) {
+    if (!allowCloudFallback) {
+      throw new Error("On-device Gemini Nano is unavailable in this browser or device. Use desktop Chrome 139+ with the Prompt API enabled, or explicitly enable cloud fallback.");
+    }
+    // Cloud fallback is permitted only because the analyst explicitly opted in.
+  }
+
   const result = await model.generateContent(instruction);
-  const source = result.response.inferenceSource ?? "UNKNOWN";
+  const source = String(result.response.inferenceSource ?? "UNKNOWN").toUpperCase();
+
+  // Enforce the no-cloud-consent promise even if the SDK reports an unexpected source.
+  if (!allowCloudFallback && source !== "ON_DEVICE") {
+    throw new Error("Privacy guard: Firebase reported non-local inference for an on-device-only request. The response was not accepted or saved.");
+  }
+
   const answer = result.response.text();
   await saveInvestigation({ question: prompt, answer, inferenceSource: source, inferenceMode, evidenceHash: evidence.evidence_sha256, findingCount: evidence.findings.length });
   return { answer, source, inferenceMode };
