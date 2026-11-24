@@ -14,6 +14,43 @@ A network investigation assistant that combines deterministic, reproducible traf
 
 PacketWhisperer AI helps security analysts move from network observations to cautious, evidence-grounded investigation. Its deterministic FastAPI engine analyzes validated flow CSV files and bounded offline PCAP/PCAPNG metadata, produces explainable heuristic findings, and fingerprints the uploaded evidence with SHA-256. A Firebase AI Logic analyst then explains the structured findings using hybrid inference: on-device-only by default, with cloud fallback available only after explicit analyst consent. The interface reports the inference source returned by the SDK, and the AI is instructed to separate observations from hypotheses, state uncertainty, and recommend safe validation steps.
 
+## Devpost-ready full description
+
+PacketWhisperer AI is an evidence-first hybrid security operations assistant for network investigations. It addresses two common problems: analysts need to understand why traffic was flagged, and organizations should not have to send entire packet captures to a generative AI model just to receive an explanation.
+
+The project starts with a deterministic Python/FastAPI engine. It validates flow records, analyzes bounded offline PCAP/PCAPNG metadata, produces transparent heuristic findings, and computes a SHA-256 fingerprint of the exact evidence supplied. Each finding includes a rule identifier, measured observation, threshold, and interpretation caveat.
+
+Firebase AI Logic adds a hybrid analyst experience. The application requests on-device-only inference by default. If an analyst explicitly enables cloud fallback, the application switches to prefer-on-device mode and allows cloud inference only when local inference is unavailable. The UI displays the inference source reported by the SDK. The model receives a bounded summary of findings rather than raw packet bytes and is instructed to distinguish facts from hypotheses, identify missing context, and recommend safe validation.
+
+The result is a practical demonstration of a hybrid design: deterministic evidence generation, minimized AI context, explicit cloud consent, and transparent inference provenance. It is a research prototype, not a replacement for a mature SIEM, NDR, or EDR platform.
+
+## How we built it
+
+The FastAPI service performs CSV flow analysis and bounded offline PCAP/PCAPNG metadata inspection. A Vite browser client connects to that API and to Firebase AI Logic. Firebase App Check uses the registered reCAPTCHA Enterprise provider; anonymous Firebase Authentication scopes investigation metadata saved in Firestore. The client uses `ONLY_ON_DEVICE` unless the analyst checks the cloud-fallback consent control, in which case it uses `PREFER_ON_DEVICE`. The application reports the SDK's actual `inferenceSource` value.
+
+The web client is deployed on Vercel, and the analysis API runs on Render. A fixed synthetic demo endpoint lets reviewers try the core analysis without uploading a file or receiving an operator API token. Custom evidence uploads remain protected by the operator token.
+
+## Accomplishments
+
+- Connected a deterministic network-analysis engine to Firebase AI Logic hybrid inference.
+- Implemented explicit consent for cloud fallback and display of actual inference provenance.
+- Minimized the AI input to structured findings rather than raw capture bytes.
+- Added reproducible SHA-256 evidence fingerprints and a fixed public synthetic demo.
+- Preserved cautious language: heuristic detections are leads, not proof of compromise.
+- Added automated tests, security checks, deployment documentation, and a three-minute demo plan.
+
+## Challenges
+
+The central challenge was balancing local inference, privacy, and real device constraints. Gemini Nano is not available on every computer, so the application must distinguish the selected inference mode from the actual source used. Another challenge was separating deterministic network observations from AI-generated interpretation so that the model cannot invent evidence or turn weak heuristics into claims of compromise. The project also needed a public judging path that did not expose the private upload API token; the fixed synthetic demo endpoint addresses that without opening arbitrary uploads.
+
+## Impact and next steps
+
+The design can help analysts understand traffic findings faster while limiting the information passed to generative AI. Next steps include validating on-device inference across compatible hardware, evaluating heuristics against properly licensed labeled traffic datasets, adding per-user API authorization and rate limiting, and building auditable investigation workflows. These are future goals, not features claimed as complete.
+
+## Built with
+
+Firebase AI Logic, Firebase App Check, Firebase Authentication, Cloud Firestore, Python, FastAPI, Vite, JavaScript, Docker, GitHub Actions, Vercel, and Render.
+
 ## Problem
 
 Network alerts often compress complex traffic into severity labels without giving analysts enough context to understand what was actually observed. Generative AI can make explanations easier to read, but sending raw packet captures to a cloud model creates unnecessary data exposure, cost, and trust concerns. At the same time, purely local AI may not be available on every device.
