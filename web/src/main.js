@@ -102,10 +102,11 @@ async function askAnalyst() {
     const allowCloudFallback = $("cloud-consent").checked;
     const result = await explainFindings(prompt, state.report, allowCloudFallback);
     $("ai-output").textContent = result.answer;
-    const local = result.source === "ON_DEVICE";
-    $("inference-badge").textContent = local ? "ON-DEVICE INFERENCE" : result.source === "IN_CLOUD" ? "CLOUD FALLBACK" : "SOURCE UNKNOWN";
+    const source = String(result.source || "UNKNOWN").toUpperCase();
+    const local = source === "ON_DEVICE";
+    $("inference-badge").textContent = local ? "ON-DEVICE INFERENCE" : source === "IN_CLOUD" ? "CLOUD FALLBACK" : "SOURCE UNKNOWN";
     $("inference-badge").className = "tag " + (local ? "good" : "cloud");
-    $("ai-mode").textContent = `${result.inferenceMode.toUpperCase()} · ${result.source}`;
+    $("ai-mode").textContent = `${result.inferenceMode.toUpperCase()} · ${source}`;
   } catch (error) {
     $("ai-output").textContent = `Analysis could not complete: ${error.message}. If local inference is unavailable, enable cloud fallback and retry. Check Firebase configuration, App Check and model availability.`;
   } finally {
