@@ -2,6 +2,10 @@
 
 This document is the source of truth for the project description and demo narrative. Keep every claim aligned with the deployed implementation.
 
+## Platform selection
+
+**Web (Chrome)** — the application integrates Firebase AI Logic hybrid inference for the web platform.
+
 ## Project title
 
 **PacketWhisperer AI — Evidence-First Hybrid SOC Analyst**
@@ -138,6 +142,7 @@ Show the evidence-minimization boundary, explain the consent control, and point 
 
 ## Submission checklist
 
+- [ ] Select **Web (Chrome)** as the Devpost platform.
 - [ ] Confirm final Vercel Preview deployment is READY.
 - [ ] Confirm Render API health and synthetic CSV analysis.
 - [ ] Complete the final consent/source verification on an available test device.
