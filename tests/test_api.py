@@ -16,7 +16,7 @@ def test_public_demo_endpoint_returns_fixed_synthetic_report(monkeypatch):
     assert body["flow_count"] == 21
     assert body["findings_count"] == 2
     assert body["evidence"]["synthetic"] is True
-    assert len(body["evidence"]["sha256"]) == 64
+    assert body["evidence"]["sha256"] == "e7382246dc060dd1822f36201725a6dac9af8076717db543b6d62ce0c6def6c8"
     assert body["evidence"]["filename"] == "demo-flows.csv"
 
 
