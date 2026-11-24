@@ -49,9 +49,9 @@ async def security_headers(request: Request, call_next):
 # Fixed, non-sensitive 21-row fixture for an unauthenticated read-only product demo.
 # This endpoint never accepts user uploads; it only analyzes this bounded synthetic dataset.
 DEMO_FLOW_CSV = (
-    "src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n"
+    "src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\n"
     + "".join(
-        f"10.0.0.5,192.0.2.{index},51000,{1000 + index},TCP,2048,5,0.25\\n"
+        f"10.0.0.5,192.0.2.{index},51000,{1000 + index},TCP,2048,5,0.25\n"
         for index in range(1, 22)
     )
 ).encode("utf-8")
