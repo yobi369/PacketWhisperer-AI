@@ -7,6 +7,19 @@ def test_health_and_ready():
     assert client.get("/health").json()["status"] == "ok"
     assert client.get("/ready").json()["status"] == "ready"
 
+def test_public_demo_endpoint_returns_fixed_synthetic_report(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("PACKETWHISPERER_API_TOKEN", "private-test-token")
+    response = client.get("/v1/demo/flows")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["flow_count"] == 21
+    assert body["findings_count"] == 2
+    assert body["evidence"]["synthetic"] is True
+    assert len(body["evidence"]["sha256"]) == 64
+    assert body["evidence"]["filename"] == "demo-flows.csv"
+
+
 def test_rejects_non_csv():
     response = client.post("/v1/analyze/flows", files={"file": ("capture.exe", b"x", "application/octet-stream")})
     assert response.status_code == 415
