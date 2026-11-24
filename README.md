@@ -64,6 +64,7 @@ The benchmark reports per-rule precision/recall on three generated sanity scenar
 
 - `GET /health` — liveness.
 - `GET /ready` — readiness.
+- `GET /v1/demo/flows` — public, fixed 21-row synthetic dataset analysis; accepts no uploads and requires no bearer token.
 - `POST /v1/analyze/flows` — multipart CSV upload; returns a SHA-256 fingerprint, summary, and explainable findings.
 - `POST /v1/analyze/pcap` — multipart `.pcap`, `.pcapng`, or `.cap` upload; analyzes packet metadata with 20 MiB and 100,000-packet limits.
 
