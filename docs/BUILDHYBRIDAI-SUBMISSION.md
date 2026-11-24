@@ -51,6 +51,20 @@ The design can help analysts understand traffic findings faster while limiting t
 
 Firebase AI Logic, Firebase App Check, Firebase Authentication, Cloud Firestore, Python, FastAPI, Vite, JavaScript, Docker, GitHub Actions, Vercel, and Render.
 
+## Existing project disclosure
+
+PacketWhisperer AI began as an existing network-analysis project. During the #BuildHybridAI submission period, the project was significantly extended with the following work:
+
+- Added a Vite-based Hybrid SOC web application.
+- Integrated Firebase AI Logic at runtime with on-device-only and consented cloud-fallback inference modes.
+- Added device-model initialization and SDK-reported inference-source labels.
+- Integrated Firebase App Check with reCAPTCHA Enterprise, anonymous Firebase Authentication, and Firestore investigation metadata.
+- Added owner-scoped Firestore rules and a bounded evidence-summary prompt that excludes raw packet bytes.
+- Added the public fixed synthetic demo endpoint so judges can try deterministic analysis without an API token.
+- Added a hosted deployment, security/CI coverage, and updated documentation and submission materials.
+
+The pre-existing deterministic engine is the foundation: it validates flow data, analyzes bounded offline packet metadata, produces explainable heuristic findings, and fingerprints evidence. The hackathon work adds a consent-aware hybrid AI analyst that explains those findings without replacing the deterministic engine.
+
 ## Problem
 
 Network alerts often compress complex traffic into severity labels without giving analysts enough context to understand what was actually observed. Generative AI can make explanations easier to read, but sending raw packet captures to a cloud model creates unnecessary data exposure, cost, and trust concerns. At the same time, purely local AI may not be available on every device.
@@ -132,13 +146,13 @@ Show the evidence-minimization boundary, explain the consent control, and point 
 - [ ] Confirm GitHub repository is public and includes an appropriate license.
 - [ ] Add the live app URL and YouTube demo URL to the Devpost entry.
 - [ ] Review the final Devpost description for unsupported claims.
-- [ ] Submit before the published deadline.
+- [ ] Submit before **November 30, 2026 at 2:00 PM Pacific Time (December 1, 2026 at 1:00 AM Kenya time)**.
 
 ## Public links
 
 - Repository: https://github.com/yobi369/PacketWhisperer-AI
 - Hackathon branch: https://github.com/yobi369/PacketWhisperer-AI/tree/hackathon/buildhybridai-web
-- Hosted Preview: https://packetwhisper-git-hackathon-bui-7b6d58-brians-projects-a132bca2.vercel.app
+- Hosted Preview alias (SSO-protected; use the time-limited share URL for judges): https://packetwhisper-git-hackathon-bui-7b6d58-brians-projects-a132bca2.vercel.app
 - Analysis API: https://packetwhisperer-ai.onrender.com
 - YouTube demo: add after recording.
 - Devpost submission: add after publishing.
