@@ -67,7 +67,7 @@ A successful cloud-fallback run has been observed and reported by the SDK as `PR
 - No full protocol dissection or endpoint detection.
 - Heuristic thresholds have not been calibrated against representative production traffic.
 - No production-grade multi-tenant identity, role-based authorization, or case-management workflow.
-- The hosted analysis API currently uses an operator-issued shared bearer token; it is not a public multi-user service.
+- The hosted analysis API exposes a fixed read-only synthetic demo route without authentication; custom evidence upload routes still use an operator-issued shared bearer token. The upload API is not a public multi-user service.
 - On-device inference depends on supported browser/device hardware and model availability.
 - This is a research prototype, not a certified IDS, EDR, or production SOC platform.
 
@@ -77,7 +77,7 @@ A successful cloud-fallback run has been observed and reported by the SDK as `PR
 "PacketWhisperer separates what the network evidence shows from what an analyst thinks it means. Deterministic analysis comes first; AI explains the evidence without replacing it."
 
 **0:30–1:15 — Evidence**
-Open the hosted web client, enter the analysis API endpoint and operator-issued bearer token, load the synthetic demo CSV, and run analysis. Show the 21 records, findings, and SHA-256 fingerprint. Explain that the signals are not proof of compromise.
+Open the hosted web client and click **Load safe synthetic demo**. The fixed public demo endpoint requires no API token. Show the 21 records, findings, and SHA-256 fingerprint. Explain that the signals are not proof of compromise.
 
 **1:15–2:15 — Hybrid analyst**
 Ask: "Explain the strongest evidence for a scan-like pattern. Separate observed facts from hypotheses, state what information is missing, and list safe validation steps." On compatible hardware, demonstrate the on-device-only path and verify `ON_DEVICE`. Otherwise, explicitly enable cloud fallback and show the SDK-reported source. Never describe a cloud result as on-device.
