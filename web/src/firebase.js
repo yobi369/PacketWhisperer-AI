@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { getAI, GoogleAIBackend, getGenerativeModel, InferenceMode } from "firebase/ai";
 import { getAuth, signInAnonymously } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -25,12 +25,13 @@ if (!missing.length) {
   };
   app = initializeApp(config);
 
+  // App Check must be initialized before Firebase AI Logic and other Firebase services.
   const debugAppCheck = env.DEV && env.VITE_APPCHECK_DEBUG === "true";
-  const siteKey = env.VITE_RECAPTCHA_V3_SITE_KEY;
+  const enterpriseSiteKey = env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY;
   if (debugAppCheck) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-  if (siteKey) {
+  if (enterpriseSiteKey) {
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey),
+      provider: new ReCaptchaEnterpriseProvider(enterpriseSiteKey),
       isTokenAutoRefreshEnabled: true,
     });
     appCheckReady = true;
