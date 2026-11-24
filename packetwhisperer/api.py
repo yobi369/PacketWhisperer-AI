@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from packetwhisperer import __version__
 from packetwhisperer.analyzer import FlowValidationError, analyze_flows, parse_flows
 from packetwhisperer.pcap_analyzer import CaptureValidationError, MAX_CAPTURE_BYTES, analyze_pcap
@@ -15,6 +16,15 @@ from packetwhisperer.pcap_analyzer import CaptureValidationError, MAX_CAPTURE_BY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("packetwhisperer")
 app = FastAPI(title="PacketWhisperer AI", version=__version__, description="Explainable network-flow analysis API. Findings are heuristic investigation leads, not proof of compromise.", docs_url="/docs", redoc_url="/redoc")
+
+cors_origins = [origin.strip() for origin in os.getenv("PACKETWHISPERER_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 
 @app.middleware("http")
