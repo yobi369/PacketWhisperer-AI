@@ -138,6 +138,37 @@ def demo_flows() -> JSONResponse:
     return JSONResponse(content=report)
 
 
+
+# Separate bounded fixture so the original public demo remains stable.
+# Both scan patterns are synthetic and deliberately use documentation-only IP ranges.
+DEMO_SCAN_CSV = (
+    "src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n"
+    + "".join(
+        f"10.0.0.50,192.0.2.{index},52000,22,TCP,512,3,0.1\\n"
+        for index in range(1, 22)
+    )
+    + "".join(
+        f"10.0.0.60,198.51.100.10,{53000 + port},{port},TCP,512,3,0.1\\n"
+        for port in range(1, 22)
+    )
+).encode("utf-8")
+
+
+@app.get("/v1/demo/scan-patterns", tags=["demo"])
+def demo_scan_patterns() -> JSONResponse:
+    """Return deterministic analysis of fixed synthetic horizontal and vertical scan patterns."""
+    flows = parse_flows(DEMO_SCAN_CSV)
+    report = analyze_flows(flows)
+    report["evidence"] = {
+        "sha256": hashlib.sha256(DEMO_SCAN_CSV).hexdigest(),
+        "filename": "synthetic-scan-patterns.csv",
+        "bytes_received": len(DEMO_SCAN_CSV),
+        "format": "network-flow-csv",
+        "synthetic": True,
+    }
+    return JSONResponse(content=report)
+
+
 @app.post("/v1/analyze/flows", tags=["analysis"], dependencies=[Depends(require_api_access)])
 async def analyze_upload(file: UploadFile = File(...)) -> JSONResponse:
     filename = (file.filename or "").replace("\\", "/").split("/")[-1]
