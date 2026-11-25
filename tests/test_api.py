@@ -20,6 +20,26 @@ def test_public_demo_endpoint_returns_fixed_synthetic_report(monkeypatch):
     assert body["evidence"]["filename"] == "demo-flows.csv"
 
 
+def test_public_scan_pattern_demo_returns_both_synthetic_scan_types(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("PACKETWHISPERER_API_TOKEN", "private-test-token")
+    response = client.get("/v1/demo/scan-patterns")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["flow_count"] == 42
+    assert body["evidence"]["synthetic"] is True
+    assert body["evidence"]["filename"] == "synthetic-scan-patterns.csv"
+    rules = {finding["rule_id"] for finding in body["findings"]}
+    assert "FLOW-HORIZONTAL-PORT-SCAN" in rules
+    assert "FLOW-VERTICAL-PORT-SCAN" in rules
+    horizontal = next(f for f in body["findings"] if f["rule_id"] == "FLOW-HORIZONTAL-PORT-SCAN")
+    vertical = next(f for f in body["findings"] if f["rule_id"] == "FLOW-VERTICAL-PORT-SCAN")
+    assert horizontal["observed"] == 21
+    assert horizontal["destination_port"] == 22
+    assert vertical["observed"] == 21
+    assert vertical["destination_ip"] == "198.51.100.10"
+
+
 def test_rejects_non_csv():
     response = client.post("/v1/analyze/flows", files={"file": ("capture.exe", b"x", "application/octet-stream")})
     assert response.status_code == 415
