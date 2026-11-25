@@ -29,7 +29,7 @@ def scenarios():
                 row("10.0.0.40", "10.0.4.10", 54000 + port, port)
                 for port in range(1, 26)
             ),
-            "expected_rules": {"FLOW-VERTICAL-PORT-SCAN"},
+            "expected_rules": {"FLOW-VERTICAL-PORT-SCAN", "FLOW-PORT-DIVERSITY"},
         },
         "synthetic_large_transfer": {
             "csv": HEADER + row("10.0.0.30", "10.0.3.10", 53000, 443, 75_000_000),
