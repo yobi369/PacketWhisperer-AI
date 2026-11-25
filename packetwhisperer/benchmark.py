@@ -22,7 +22,14 @@ def scenarios():
         },
         "synthetic_destination_sweep": {
             "csv": HEADER + b"".join(row("10.0.0.20", f"10.0.2.{i}", 52000 + i, 443) for i in range(1, 26)),
-            "expected_rules": {"FLOW-HIGH-FANOUT"},
+            "expected_rules": {"FLOW-HIGH-FANOUT", "FLOW-HORIZONTAL-PORT-SCAN"},
+        },
+        "synthetic_vertical_service_sweep": {
+            "csv": HEADER + b"".join(
+                row("10.0.0.40", "10.0.4.10", 54000 + port, port)
+                for port in range(1, 26)
+            ),
+            "expected_rules": {"FLOW-VERTICAL-PORT-SCAN"},
         },
         "synthetic_large_transfer": {
             "csv": HEADER + row("10.0.0.30", "10.0.3.10", 53000, 443, 75_000_000),
