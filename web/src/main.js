@@ -24,6 +24,7 @@ apiUrl.addEventListener("input", () => {
 
 $("analyze-btn").addEventListener("click", analyzeEvidence);
 $("demo-btn").addEventListener("click", loadSyntheticDemo);
+$("scan-demo-btn").addEventListener("click", loadScanPatternDemo);
 $("ask-btn").addEventListener("click", askAnalyst);
 
 function formatBytes(bytes) {
@@ -62,6 +63,33 @@ async function loadSyntheticDemo() {
   } catch (error) {
     setMessage(error.message || "Unable to load the synthetic demo.", true);
   } finally {
+    $("demo-btn").disabled = false;
+  }
+}
+
+async function loadScanPatternDemo() {
+  const base = apiUrl.value.trim().replace(/\\/$/, "");
+  if (!base) {
+    setMessage("Enter the PacketWhisperer API endpoint first.", true);
+    return;
+  }
+  $("scan-demo-btn").disabled = true;
+  $("demo-btn").disabled = true;
+  setMessage("Loading fixed synthetic horizontal and vertical scan patterns…");
+  try {
+    const response = await fetch(base + "/v1/demo/scan-patterns");
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail || `Scan demo endpoint returned ${response.status}`);
+    state.report = body;
+    renderReport(body, body.evidence?.bytes_received ?? 0);
+    $("analyst-prompt").value = "Compare the horizontal and vertical scan indicators. Explain the exact observed evidence, distinguish facts from hypotheses, and list safe validation steps.";
+    $("analyst-prompt").disabled = !status.configured || !(body.findings?.length);
+    $("ask-btn").disabled = !status.configured || !(body.findings?.length);
+    setMessage("Scan-pattern demo loaded: 42 synthetic flows. No upload or API bearer token was required.");
+  } catch (error) {
+    setMessage(error.message || "Unable to load the scan-pattern demo.", true);
+  } finally {
+    $("scan-demo-btn").disabled = false;
     $("demo-btn").disabled = false;
   }
 }
