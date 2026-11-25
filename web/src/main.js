@@ -10,7 +10,7 @@ $("inference-badge").textContent = status.configured ? "HYBRID READY" : "NOT CON
 $("inference-badge").className = "tag " + (status.configured ? "good" : "neutral");
 
 const apiUrl = $("api-url");
-apiUrl.value = localStorage.getItem("pw_api_url") || "https://packetwhisperer-ai.onrender.com";
+apiUrl.value = localStorage.getItem("pw_api_url") || "https://packetwhisperer-hackathon-demo-api.onrender.com";
 apiUrl.addEventListener("change", () => localStorage.setItem("pw_api_url", apiUrl.value.trim()));
 
 $("evidence-file").addEventListener("change", (event) => {
