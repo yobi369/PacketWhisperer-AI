@@ -5,6 +5,9 @@ const $ = (id) => document.getElementById(id);
 const state = { report: null, file: null };
 const status = firebaseStatus();
 
+// Cloud fallback consent is per request; never restore a prior checkbox state.
+$("cloud-consent").checked = false;
+
 $("system-status").textContent = status.configured ? "FIREBASE AI READY" : "CONFIGURATION REQUIRED";
 $("inference-badge").textContent = status.configured ? "HYBRID READY" : "NOT CONFIGURED";
 $("inference-badge").className = "tag " + (status.configured ? "good" : "neutral");
@@ -198,6 +201,8 @@ async function askAnalyst() {
     }
   } finally {
     $("ask-btn").disabled = false;
+    // Require fresh consent for every subsequent analyst request.
+    $("cloud-consent").checked = false;
   }
 }
 
