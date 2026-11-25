@@ -144,9 +144,17 @@ export async function explainFindings(prompt, report, allowCloudFallback = false
   const result = await model.generateContent(instruction);
   const source = String(result.response.inferenceSource ?? "UNKNOWN").toUpperCase();
 
-  // Enforce the no-cloud-consent promise even if the SDK reports an unexpected source.
+  // Enforce the user's inference policy and require trustworthy provenance.
+  // A missing/unknown source is never silently treated as a successful result.
+  if (!["ON_DEVICE", "IN_CLOUD"].includes(source)) {
+    const error = new Error("Firebase did not provide a verifiable inference source. The response was not accepted or saved.");
+    error.code = "INFERENCE_SOURCE_UNVERIFIED";
+    throw error;
+  }
   if (!allowCloudFallback && source !== "ON_DEVICE") {
-    throw new Error("Privacy guard: Firebase reported non-local inference for an on-device-only request. The response was not accepted or saved.");
+    const error = new Error("Privacy guard blocked this response: Firebase reported non-local inference, but cloud fallback is disabled. Nothing was accepted or saved. Enable cloud fallback only if you authorize cloud processing.");
+    error.code = "PRIVACY_BLOCKED";
+    throw error;
   }
 
   const answer = result.response.text();
