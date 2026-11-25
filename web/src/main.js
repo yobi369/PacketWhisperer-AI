@@ -150,8 +150,17 @@ async function askAnalyst() {
     // Never leave a prior successful inference source displayed after a failed request.
     $("inference-badge").textContent = "NO INFERENCE RESULT";
     $("inference-badge").className = "tag neutral";
-    $("ai-mode").textContent = `${requestedMode} · FAILED`;
-    $("ai-output").textContent = `Analysis could not complete: ${error.message}. No inference source was returned for this request.`;
+    $("ai-mode").textContent = `${requestedMode} · BLOCKED`;
+    if (error.code === "PRIVACY_BLOCKED") {
+      $("inference-badge").textContent = "PRIVACY GUARD · BLOCKED";
+      $("ai-output").textContent = "PRIVACY PROTECTION ACTIVE\n\nFirebase reported cloud inference, but cloud fallback is disabled. The response was rejected and was not saved.\n\nTo continue, enable ‘Allow cloud fallback’ only if you consent to sending the minimized findings summary to Google’s cloud model, then retry.";
+    } else if (error.code === "INFERENCE_SOURCE_UNVERIFIED") {
+      $("inference-badge").textContent = "SOURCE UNVERIFIED";
+      $("ai-output").textContent = `INFERENCE NOT ACCEPTED\n\n${error.message}\n\nNo result was saved because its inference source could not be verified.`;
+    } else {
+      $("ai-mode").textContent = `${requestedMode} · FAILED`;
+      $("ai-output").textContent = `Analysis could not complete: ${error.message}. No inference source was accepted for this request.`;
+    }
   } finally {
     $("ask-btn").disabled = false;
   }
