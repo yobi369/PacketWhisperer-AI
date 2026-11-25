@@ -68,7 +68,7 @@ async function loadSyntheticDemo() {
 }
 
 async function loadScanPatternDemo() {
-  const base = apiUrl.value.trim().replace(/\\/$/, "");
+  const base = apiUrl.value.trim().replace(/\/$/, "");
   if (!base) {
     setMessage("Enter the PacketWhisperer API endpoint first.", true);
     return;
