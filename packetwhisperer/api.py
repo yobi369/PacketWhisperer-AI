@@ -142,13 +142,13 @@ def demo_flows() -> JSONResponse:
 # Separate bounded fixture so the original public demo remains stable.
 # Both scan patterns are synthetic and deliberately use documentation-only IP ranges.
 DEMO_SCAN_CSV = (
-    "src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\\n"
+    "src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration\n"
     + "".join(
-        f"10.0.0.50,192.0.2.{index},52000,22,TCP,512,3,0.1\\n"
+        f"10.0.0.50,192.0.2.{index},52000,22,TCP,512,3,0.1\n"
         for index in range(1, 22)
     )
     + "".join(
-        f"10.0.0.60,198.51.100.10,{53000 + port},{port},TCP,512,3,0.1\\n"
+        f"10.0.0.60,198.51.100.10,{53000 + port},{port},TCP,512,3,0.1\n"
         for port in range(1, 22)
     )
 ).encode("utf-8")
