@@ -26,7 +26,8 @@
           <label class="field-label" for="api-token">API bearer token <span class="optional">required for uploaded files only</span></label><input id="api-token" type="password" placeholder="Provided by your API operator" autocomplete="off"/>
           <button id="demo-btn" class="primary" type="button">Load safe synthetic demo <span>→</span></button>
           <button id="scan-demo-btn" class="secondary-demo" type="button">Load scan-pattern demo <span>↗</span></button>
-          <p class="muted">The built-in demo is fixed, read-only synthetic data and does not require a bearer token.</p>\n          <p class="muted">The hackathon preview uses an isolated demo API. Custom uploads remain disabled there; use only the fixed synthetic datasets in this preview.</p>
+          <p class="muted">The built-in demo is fixed, read-only synthetic data and does not require a bearer token.</p>
+          <p class="muted">The hackathon preview uses an isolated demo API. Custom uploads remain disabled there; use only the fixed synthetic datasets in this preview.</p>
           <label class="field-label" for="evidence-file">Or upload network evidence</label>
           <div class="dropzone"><div class="upload-icon">↥</div><b>Choose a traffic file</b><p>CSV flow records or offline PCAP / PCAPNG</p><input id="evidence-file" type="file" accept=".csv,.pcap,.pcapng,.cap,text/csv,application/octet-stream"/><a class="sample-link" href="/demo-flows.csv" download>Download synthetic demo CSV ↗</a></div>
           <button id="analyze-btn" class="primary" disabled>Analyze evidence <span>→</span></button>
