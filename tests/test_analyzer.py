@@ -42,3 +42,48 @@ def test_rejects_non_finite_duration_and_duplicate_headers():
     duplicate_header = b"src_ip,dst_ip,src_port,dst_port,protocol,bytes,packets,duration,duration\n"
     with pytest.raises(FlowValidationError, match="duplicate column names"):
         parse_flows(duplicate_header + row())
+
+
+def test_detects_horizontal_port_scan_with_evidence():
+    raw = HEADER + b"".join(
+        row(dst=f"10.0.2.{i}", dp=22) for i in range(1, 22)
+    )
+    result = analyze_flows(parse_flows(raw), fanout_threshold=20)
+    finding = next(
+        f for f in result["findings"]
+        if f["rule_id"] == "FLOW-HORIZONTAL-PORT-SCAN"
+    )
+    assert finding["observed"] == 21
+    assert finding["destination_port"] == 22
+    assert finding["threshold"] == 20
+    assert "21 distinct destination IPs" in finding["evidence"]
+
+
+def test_detects_vertical_port_scan_with_evidence():
+    raw = HEADER + b"".join(
+        row(dst="10.0.3.10", dp=port) for port in range(1, 22)
+    )
+    result = analyze_flows(parse_flows(raw), fanout_threshold=20)
+    finding = next(
+        f for f in result["findings"]
+        if f["rule_id"] == "FLOW-VERTICAL-PORT-SCAN"
+    )
+    assert finding["observed"] == 21
+    assert finding["destination_ip"] == "10.0.3.10"
+    assert finding["threshold"] == 20
+    assert "21 distinct destination ports" in finding["evidence"]
+
+
+def test_scan_rules_do_not_trigger_below_threshold():
+    horizontal = HEADER + b"".join(
+        row(dst=f"10.0.4.{i}", dp=443) for i in range(1, 20)
+    )
+    vertical = HEADER + b"".join(
+        row(dst="10.0.5.10", dp=port) for port in range(1, 20)
+    )
+    for raw in (horizontal, vertical):
+        result = analyze_flows(parse_flows(raw), fanout_threshold=20)
+        assert not any(
+            f["rule_id"] in {"FLOW-HORIZONTAL-PORT-SCAN", "FLOW-VERTICAL-PORT-SCAN"}
+            for f in result["findings"]
+        )
