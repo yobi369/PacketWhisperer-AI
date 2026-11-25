@@ -87,10 +87,42 @@ def analyze_flows(flows: list[Flow], *, fanout_threshold: int = 20, large_flow_b
         raise ValueError("thresholds must be positive (fanout_threshold >= 2)")
     destinations: dict[str, set[str]] = defaultdict(set)
     source_dest_ports: dict[str, set[int]] = defaultdict(set)
+    # Preserve source/destination relationships to distinguish horizontal
+    # scans (many hosts, one port) from vertical scans (many ports, one host).
+    horizontal_targets: dict[tuple[str, int], set[str]] = defaultdict(set)
+    vertical_targets: dict[tuple[str, str], set[int]] = defaultdict(set)
     for f in flows:
         destinations[f.src_ip].add(f.dst_ip)
         source_dest_ports[f.src_ip].add(f.dst_port)
+        horizontal_targets[(f.src_ip, f.dst_port)].add(f.dst_ip)
+        vertical_targets[(f.src_ip, f.dst_ip)].add(f.dst_port)
     findings: list[dict[str, Any]] = []
+    for (src, port), dests_for_port in sorted(horizontal_targets.items()):
+        if len(dests_for_port) >= fanout_threshold:
+            findings.append({
+                "rule_id": "FLOW-HORIZONTAL-PORT-SCAN",
+                "severity": "medium",
+                "title": "Possible horizontal port scan",
+                "source_ip": src,
+                "destination_port": port,
+                "observed": len(dests_for_port),
+                "threshold": fanout_threshold,
+                "evidence": f"Source contacted {len(dests_for_port)} distinct destination IPs on destination port {port}.",
+                "interpretation": "A repeated single-port pattern across many hosts can indicate horizontal service discovery. Confirm authorization, time range, and network baseline before escalation.",
+            })
+    for (src, dst), ports_for_host in sorted(vertical_targets.items()):
+        if len(ports_for_host) >= fanout_threshold:
+            findings.append({
+                "rule_id": "FLOW-VERTICAL-PORT-SCAN",
+                "severity": "medium",
+                "title": "Possible vertical port scan",
+                "source_ip": src,
+                "destination_ip": dst,
+                "observed": len(ports_for_host),
+                "threshold": fanout_threshold,
+                "evidence": f"Source contacted {len(ports_for_host)} distinct destination ports on destination IP {dst}.",
+                "interpretation": "A multi-port pattern against one host can indicate service enumeration. Confirm authorization, time range, and network baseline before escalation.",
+            })
     for src, dests in sorted(destinations.items()):
         if len(dests) >= fanout_threshold:
             findings.append({"rule_id": "FLOW-HIGH-FANOUT", "severity": "medium", "title": "High destination fan-out", "source_ip": src, "observed": len(dests), "threshold": fanout_threshold, "evidence": f"Source contacted {len(dests)} distinct destination IPs in this dataset.", "interpretation": "May reflect scanning, discovery, monitoring, or normal high-volume client behavior; investigate context."})
@@ -100,4 +132,4 @@ def analyze_flows(flows: list[Flow], *, fanout_threshold: int = 20, large_flow_b
     for idx, f in enumerate(flows, start=1):
         if f.bytes >= large_flow_bytes:
             findings.append({"rule_id": "FLOW-LARGE-TRANSFER", "severity": "low", "title": "Large single-flow transfer", "flow_index": idx, "source_ip": f.src_ip, "destination_ip": f.dst_ip, "observed_bytes": f.bytes, "threshold_bytes": large_flow_bytes, "evidence": f"Flow record {idx} reports {f.bytes} bytes over {f.duration:g} seconds.", "interpretation": "Large transfers may be expected; validate destination, application, authorization, and baseline before escalation."})
-    return {"flow_count": len(flows), "unique_sources": len({f.src_ip for f in flows}), "unique_destinations": len({f.dst_ip for f in flows}), "total_bytes": sum(f.bytes for f in flows), "total_packets": sum(f.packets for f in flows), "findings_count": len(findings), "findings": findings, "limitations": ["Heuristic alerts are leads, not proof of compromise.", "Results depend on the uploaded dataset and the selected thresholds.", "Encrypted payloads and packet-level details are not available from flow CSV records."]}
+    return {"flow_count": len(flows), "unique_sources": len({f.src_ip for f in flows}), "unique_destinations": len({f.dst_ip for f in flows}), "total_bytes": sum(f.bytes for f in flows), "total_packets": sum(f.packets for f in flows), "findings_count": len(findings), "findings": findings, "limitations": ["Heuristic alerts are leads, not proof of compromise.", "Results depend on the uploaded dataset and the selected thresholds.", "Flow CSV records do not provide a reliable time window; scan-pattern alerts are based on distinct host/port relationships, not scan rate.", "Encrypted payloads and packet-level details are not available from flow CSV records."]}

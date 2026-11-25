@@ -64,8 +64,26 @@ The benchmark reports per-rule precision/recall on three generated sanity scenar
 
 - `GET /health` — liveness.
 - `GET /ready` — readiness.
+- `GET /v1/demo/flows` — public, fixed 21-row synthetic dataset analysis; accepts no uploads and requires no bearer token.
 - `POST /v1/analyze/flows` — multipart CSV upload; returns a SHA-256 fingerprint, summary, and explainable findings.
 - `POST /v1/analyze/pcap` — multipart `.pcap`, `.pcapng`, or `.cap` upload; analyzes packet metadata with 20 MiB and 100,000-packet limits.
+
+## Hybrid SOC web client
+
+The competition web client lives in [web/](web/README.md). It uses Firebase AI Logic hybrid inference, displays the SDK-reported inference source, and sends only a minimized structured findings summary to the model. On-device-only inference is the default; cloud fallback requires explicit analyst consent and selects `PREFER_ON_DEVICE`. The original deterministic FastAPI analysis engine remains the source of network evidence.
+
+Run the web client with:
+
+```bash
+cd web
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+For hosted API access, configure `PACKETWHISPERER_CORS_ORIGINS` with the exact deployed web origin and set `PACKETWHISPERER_API_TOKEN` as a server-side secret. The current web client sends this operator-issued bearer token to the FastAPI analysis endpoints. Keep it private; never commit it, place it in a `VITE_*` variable, or include it in a public recording. Firebase anonymous authentication currently scopes analyst metadata saved in Firestore. The hackathon branch contains an optional Firebase Admin verification hook, but the Render service currently deployed from `main` uses the bearer-token gate; do not assume the deployed API accepts Firebase ID tokens. A future multi-user deployment needs that verified identity path enabled and tested, plus per-user authorization.
+
+See [web/README.md](web/README.md) for Firebase setup, App Check, Firestore rules, API authentication and hybrid inference limitations. The [BuildHybridAI submission package](docs/BUILDHYBRIDAI-SUBMISSION.md) contains the project narrative, three-minute demo script, and final submission checklist.
 
 ## Detection behavior
 
@@ -73,7 +91,7 @@ The baseline engine uses transparent heuristics such as destination-port fan-out
 
 ## Security and production status
 
-Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The service is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, persistent case management, and external LLM integrations are not claimed as implemented.
+Do not expose this service directly to the public internet or upload sensitive captures until authentication, authorization, deployment hardening, retention policy, and organizational privacy requirements have been reviewed. The service is a research foundation, not a certified or independently validated production intrusion-detection system. Offline packet metadata parsing is implemented; deep protocol dissection, live packet capture, and a production-grade multi-tenant case-management system are not claimed. The competition web client adds Firebase AI Logic hybrid explanation of structured findings; this does not replace deterministic detections or independently validate threat conclusions.
 
 ## Technical brief
 
@@ -85,7 +103,7 @@ See [`docs/RESEARCH_BRIEF.md`](docs/RESEARCH_BRIEF.md) for the research question
 2. Detection rule registry, confidence calibration, and ATT&CK mapping where justified.
 3. Case management, role-based access, audit persistence, and retention controls.
 4. Benchmark suite with labeled datasets, false-positive metrics, and performance baselines.
-5. Optional AI-assisted summaries with citations to concrete evidence and strict data controls.
+5. Expand hybrid AI explanations with richer evidence references, privacy controls, and evaluation against analyst-reviewed cases.
 
 ## Responsible use
 

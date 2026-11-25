@@ -1,0 +1,212 @@
+import "./style.css";
+import { firebaseStatus, explainFindings, getAnalystIdToken } from "./firebase.js";
+
+const $ = (id) => document.getElementById(id);
+const state = { report: null, file: null };
+const status = firebaseStatus();
+
+// Cloud fallback consent is per request; never restore a prior checkbox state.
+$("cloud-consent").checked = false;
+
+$("system-status").textContent = status.configured ? "FIREBASE AI READY" : "CONFIGURATION REQUIRED";
+$("inference-badge").textContent = status.configured ? "HYBRID READY" : "NOT CONFIGURED";
+$("inference-badge").className = "tag " + (status.configured ? "good" : "neutral");
+
+const apiUrl = $("api-url");
+apiUrl.value = localStorage.getItem("pw_api_url") || "https://packetwhisperer-hackathon-demo-api.onrender.com";
+apiUrl.addEventListener("change", () => localStorage.setItem("pw_api_url", apiUrl.value.trim()));
+
+$("evidence-file").addEventListener("change", (event) => {
+  state.file = event.target.files?.[0] || null;
+  $("analyze-btn").disabled = !state.file || !apiUrl.value.trim();
+  $("ingest-message").textContent = state.file ? `${state.file.name} · ${formatBytes(state.file.size)}` : "Choose a supported file.";
+});
+apiUrl.addEventListener("input", () => {
+  $("analyze-btn").disabled = !state.file || !apiUrl.value.trim();
+});
+
+$("analyze-btn").addEventListener("click", analyzeEvidence);
+$("demo-btn").addEventListener("click", loadSyntheticDemo);
+$("scan-demo-btn").addEventListener("click", loadScanPatternDemo);
+$("ask-btn").addEventListener("click", askAnalyst);
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+function safeText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+}
+function setMessage(message, isError = false) {
+  $("ingest-message").textContent = message;
+  $("ingest-message").className = "notice " + (isError ? "error" : "");
+}
+
+async function loadSyntheticDemo() {
+  const base = apiUrl.value.trim().replace(/\/$/, "");
+  if (!base) {
+    setMessage("Enter the PacketWhisperer API endpoint first.", true);
+    return;
+  }
+  $("demo-btn").disabled = true;
+  setMessage("Loading the fixed synthetic demo…");
+  try {
+    const response = await fetch(base + "/v1/demo/flows");
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail || `Demo endpoint returned ${response.status}`);
+    state.report = body;
+    renderReport(body, body.evidence?.bytes_received ?? 0);
+    if (!$("analyst-prompt").value.trim()) {
+      $("analyst-prompt").value = "Explain the strongest evidence for a scan-like pattern. Separate observed facts from hypotheses, state what information is missing, and list safe validation steps.";
+    }
+    $("analyst-prompt").disabled = !status.configured || !(body.findings?.length);
+    $("ask-btn").disabled = !status.configured || !(body.findings?.length);
+    setMessage("Synthetic demo loaded. No upload or API bearer token was required.");
+  } catch (error) {
+    setMessage(error.message || "Unable to load the synthetic demo.", true);
+  } finally {
+    $("demo-btn").disabled = false;
+  }
+}
+
+async function loadScanPatternDemo() {
+  const base = apiUrl.value.trim().replace(/\/$/, "");
+  if (!base) {
+    setMessage("Enter the PacketWhisperer API endpoint first.", true);
+    return;
+  }
+  $("scan-demo-btn").disabled = true;
+  $("demo-btn").disabled = true;
+  setMessage("Loading fixed synthetic horizontal and vertical scan patterns…");
+  try {
+    const response = await fetch(base + "/v1/demo/scan-patterns");
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail || `Scan demo endpoint returned ${response.status}`);
+    state.report = body;
+    renderReport(body, body.evidence?.bytes_received ?? 0);
+    $("analyst-prompt").value = "Compare the horizontal and vertical scan indicators. Explain the exact observed evidence, distinguish facts from hypotheses, and list safe validation steps.";
+    $("analyst-prompt").disabled = !status.configured || !(body.findings?.length);
+    $("ask-btn").disabled = !status.configured || !(body.findings?.length);
+    setMessage("Scan-pattern demo loaded: 42 synthetic flows. No upload or API bearer token was required.");
+  } catch (error) {
+    setMessage(error.message || "Unable to load the scan-pattern demo.", true);
+  } finally {
+    $("scan-demo-btn").disabled = false;
+    $("demo-btn").disabled = false;
+  }
+}
+
+async function analyzeEvidence() {
+  const base = apiUrl.value.trim().replace(/\/$/, "");
+  if (!base || !state.file) return;
+  const token = $("api-token").value.trim();
+  const isPcap = /\.(pcap|pcapng|cap)$/i.test(state.file.name);
+  const endpoint = isPcap ? "/v1/analyze/pcap" : "/v1/analyze/flows";
+  const form = new FormData();
+  form.append("file", state.file);
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else if (status.authConfigured) {
+    try {
+      headers.Authorization = `Bearer ${await getAnalystIdToken()}`;
+    } catch (error) {
+      setMessage(`Firebase sign-in failed: ${error.message}`, true);
+      return;
+    }
+  }
+  $("analyze-btn").disabled = true;
+  setMessage("Analyzing evidence…");
+  try {
+    const response = await fetch(base + endpoint, { method: "POST", headers, body: form });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail || `Analysis API returned ${response.status}`);
+    state.report = body;
+    renderReport(body, state.file.size);
+    $("analyst-prompt").disabled = !status.configured || !(body.findings?.length);
+    $("ask-btn").disabled = !status.configured || !(body.findings?.length);
+    setMessage("Analysis complete. Review the evidence and findings before drawing conclusions.");
+  } catch (error) {
+    setMessage(error.message || "Unable to reach the analysis API.", true);
+  } finally {
+    $("analyze-btn").disabled = false;
+  }
+}
+
+function renderReport(report, fileSize) {
+  $("empty-state").classList.add("hidden");
+  $("report-view").classList.remove("hidden");
+  $("evidence-state").textContent = report.evidence?.synthetic ? "SYNTHETIC DEMO" : "ANALYSIS COMPLETE";
+  $("evidence-state").className = "tag good";
+  $("metric-records").textContent = report.flow_count ?? report.capture?.packets_analyzed ?? "—";
+  $("metric-findings").textContent = report.findings_count ?? report.findings?.length ?? 0;
+  const critical = (report.findings || []).filter((item) => ["high", "critical"].includes(String(item.severity).toLowerCase())).length;
+  $("metric-severity").textContent = critical;
+  $("metric-size").textContent = formatBytes(fileSize);
+  $("evidence-hash").textContent = report.evidence?.sha256 || "Fingerprint not returned";
+  $("findings-count").textContent = `${report.findings?.length || 0} records`;
+  $("findings-list").innerHTML = (report.findings || []).map((finding) => {
+    const severity = String(finding.severity || "info").toLowerCase();
+    const scope = [
+      finding.source_ip ? `Source: ${finding.source_ip}` : "",
+      finding.destination_ip ? `Destination: ${finding.destination_ip}` : "",
+      finding.destination_port !== undefined ? `Port: ${finding.destination_port}` : "",
+      finding.observed !== undefined ? `Observed: ${finding.observed}` : "",
+      finding.threshold !== undefined ? `Threshold: ${finding.threshold}` : "",
+    ].filter(Boolean).join(" · ");
+    return `<article class="finding"><div class="finding-top"><div><b>${safeText(finding.title || finding.rule_id || finding.rule || "Finding")}</b><small>${safeText(finding.rule_id || finding.rule || "RULE UNSPECIFIED")}</small></div><span class="severity ${safeText(severity)}">${safeText(severity)}</span></div>${scope ? `<div class="finding-scope">${safeText(scope)}</div>` : ""}<p>${safeText(finding.interpretation || finding.description || finding.summary || "No description supplied.")}</p>${finding.evidence ? `<p class="finding-evidence">Evidence: ${safeText(finding.evidence)}</p>` : ""}</article>`;
+  }).join("") || '<div class="empty-state compact">No findings were returned by the deterministic analysis engine.</div>';
+}
+
+async function askAnalyst() {
+  const prompt = $("analyst-prompt").value.trim();
+  if (!prompt || !state.report) return;
+
+  const allowCloudFallback = $("cloud-consent").checked;
+  const requestedMode = allowCloudFallback ? "PREFER_ON_DEVICE" : "ONLY_ON_DEVICE";
+
+  // Clear provenance from any previous request. A failed request has no inference source.
+  $("inference-badge").textContent = "INFERENCE IN PROGRESS";
+  $("inference-badge").className = "tag neutral";
+  $("ai-mode").textContent = `${requestedMode} · PENDING`;
+  $("ask-btn").disabled = true;
+  $("ai-output").textContent = "Reviewing structured findings…";
+
+  try {
+    const result = await explainFindings(prompt, state.report, allowCloudFallback, (progress) => {
+      const percentage = Math.round(progress * 100);
+      $("ai-output").textContent = `Preparing on-device model… ${percentage}%`;
+    });
+    $("ai-output").textContent = result.answer;
+    const source = String(result.source || "UNKNOWN").toUpperCase();
+    const local = source === "ON_DEVICE";
+    $("inference-badge").textContent = local ? "ON-DEVICE INFERENCE" : source === "IN_CLOUD" ? "CLOUD FALLBACK" : "SOURCE UNKNOWN";
+    $("inference-badge").className = "tag " + (local ? "good" : "cloud");
+    $("ai-mode").textContent = `${result.inferenceMode.toUpperCase()} · ${source}`;
+  } catch (error) {
+    // Never leave a prior successful inference source displayed after a failed request.
+    $("inference-badge").textContent = "NO INFERENCE RESULT";
+    $("inference-badge").className = "tag neutral";
+    $("ai-mode").textContent = `${requestedMode} · BLOCKED`;
+    if (error.code === "PRIVACY_BLOCKED") {
+      $("inference-badge").textContent = "PRIVACY GUARD · BLOCKED";
+      $("ai-output").textContent = "PRIVACY PROTECTION ACTIVE\n\nFirebase reported cloud inference, but cloud fallback is disabled. The response was rejected and was not saved.\n\nTo continue, enable ‘Allow cloud fallback’ only if you consent to sending the minimized findings summary to Google’s cloud model, then retry.";
+    } else if (error.code === "INFERENCE_SOURCE_UNVERIFIED") {
+      $("inference-badge").textContent = "SOURCE UNVERIFIED";
+      $("ai-output").textContent = `INFERENCE NOT ACCEPTED\n\n${error.message}\n\nNo result was saved because its inference source could not be verified.`;
+    } else {
+      $("ai-mode").textContent = `${requestedMode} · FAILED`;
+      $("ai-output").textContent = `Analysis could not complete: ${error.message}. No inference source was accepted for this request.`;
+    }
+  } finally {
+    $("ask-btn").disabled = false;
+    // Require fresh consent for every subsequent analyst request.
+    $("cloud-consent").checked = false;
+  }
+}
+
+if (!status.configured) {
+  const details = status.missing.length ? `Missing Firebase settings: ${status.missing.join(", ")}.` : "App Check or Firebase initialization is incomplete.";
+  $("ai-output").textContent = details + " Configure web/.env.local using web/.env.example. Hybrid AI remains disabled until Firebase is configured.";
+}
